@@ -18,6 +18,8 @@ let RS485 = {
   _wr: ffi('int mgos_uart_write(int, char *, int)'),
   _rd: ffi('int mgos_uart_read(int, void *, int)'),
   calloc: ffi('void *calloc(int, int)'),
+  crc16: ffi('int crc16(void *, int)'),
+
  
   setConfig: function(uartNo, param) {
     let cfg = this._cdef(uartNo);
@@ -132,17 +134,36 @@ let RS485 = {
     this.modbusRequestFrame.crc = this.readInt16(uartNo);
     print("crc is ", this.modbusRequestFrame.crc);
     this.readState = MODBUS_STATE_READ_DEVICE_ID;
-    this.checkCrc();
+    this.checkCrc(uartNo);
   },
 
-  checkCrc: function () {
+  checkCrc: function (uartNo) {
     print("checking crc ..");
-    this.processRequest();
+    this.processRequest(uartNo);
   },
 
-  processRequest: function() {
+  processRequest: function(uartNo) {
     print("processing request");
     
+    let ptr = RS485.calloc(100, 1);
+    let dw = DataView.create(ptr, 0, 100);
+    dw.setUint8(0, 1); //id
+    dw.setUint8(1, 1); //fc
+    dw.setUint8(2, 1); // byte count
+    dw.setUint8(3, 1); // data
+    
+    //dw.setUint16(4, 0xffff); //crc
+    let c = RS485.crc16(ptr, 4);
+    dw.setUint8(4, (c >> 8) & 0xff ); 
+    dw.setUint8(5, (c  & 0xff ));
+    
+    print("C Is  ", c);
+
+    let s = mkstr(ptr, 6);
+    this.write(uartNo, s, 6);
+
+    print("processing done");
+
 
   },
 
@@ -151,10 +172,19 @@ let RS485 = {
   // Write data to the buffer. Returns number of bytes written.
   //
   // Example usage: `UART.write(1, "foobar")`, in this case, 6 bytes will be written.
-  write: function(uartNo, data) {
+  write2: function(uartNo, data) {
     GPIO.write(this.controlPin, 1);
 
     this._wr(uartNo, data, data.length);
+
+    this.flush(uartNo);
+    GPIO.write(this.controlPin, 0);
+  },
+
+  write: function(uartNo, data, length) {
+    GPIO.write(this.controlPin, 1);
+
+    this._wr(uartNo, data, length);
 
     this.flush(uartNo);
     GPIO.write(this.controlPin, 0);
