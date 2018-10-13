@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "flash": "mos build --arch esp32 && mos flash",
-    "fs": "mos put fs/*.js && mos call Sys.Reboot",
+    "fs": "sh upload.sh",
+    "win-fs": "upload.bat",
     "init-js": "mos put fs/init.js && mos call Sys.Reboot && mos console",
     "console": "mos console"
   },
