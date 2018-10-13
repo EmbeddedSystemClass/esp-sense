@@ -1,82 +1,209 @@
-load('api_timer.js');
-load('api_uart.js');
-load('api_sys.js');
-load('api_gpio.js');
-load('hello.js');
+// UART API. Source C API is defined at:
+// [mgos_uart.h](https://github.com/cesanta/mongoose-os/blob/master/fw/src/mgos_uart.h)
 
+let MODBUS_STATE_READ_DEVICE_ID=0;
+let MODBUS_STATE_READ_FUNC=1;
+let MODBUS_STATE_READ_ADDRESS=2;
+let MODBUS_STATE_READ_LENGTH=3;
+let MODBUS_STATE_READ_READ_DATA=4;
+let MODBUS_STATE_READ_READ_CRC=5;
+
+let RS485 = {
+  _free: ffi('void free(void *)'),
+  _cdef: ffi('void *mgos_uart_config_get_default(int)'),
+  _cbp: ffi('void mgos_uart_config_set_basic_params(void *, int, int, int, int)'),
+  _crx: ffi('void mgos_uart_config_set_rx_params(void *, int, int, int)'),
+  _ctx: ffi('void mgos_uart_config_set_tx_params(void *, int, int)'),
+  _cfg: ffi('int mgos_uart_configure(int, void *)'),
+  _wr: ffi('int mgos_uart_write(int, char *, int)'),
+  _rd: ffi('int mgos_uart_read(int, void *, int)'),
  
-let receiveBuffer = {
-  rxAcc: ''
-};
+  setConfig: function(uartNo, param) {
+    let cfg = this._cdef(uartNo);
 
-let serialPortConfig = {
-  uartNo: 2,
-  controlPin: 23,
-  config: {
-        baudRate: 9600,
-        esp32: {
-          gpio: {
-            rx: 16,
-            tx: 17
-          }
-        }
-      }
-};
+    this._cbp(cfg, param.baudRate || 115200,
+                   param.numDataBits || 8,
+                   param.parity || 0,
+                   param.numStopBits || 1);
 
-let SerialPort2 = {
-  init: function(serialPortConfig) {
-      this.serialPortConfig = serialPortConfig;
-      UART.setConfig(serialPortConfig.uartNo, serialPortConfig.config);
-     GPIO.set_mode(serialPortConfig.controlPin, GPIO.MODE_OUTPUT);
-     
-     UART.setDispatcher(serialPortConfig.uartNo, function(uartNo) {
-        let ra = UART.readAvail(uartNo);
-        if (ra > 0) {
-          // Received new data: print it immediately to the console, and also
-          // accumulate in the "rxAcc" variable which will be echoed back to UART later
-          let data = UART.read(uartNo);
-          print('Received UART data:', data);
-          //rxAcc += data;
-          receiveBuffer.rxAcc += data;
-        }
-      }, null);
-      
-        
-    // Enable Rx
-    UART.setRxEnabled(serialPortConfig.uartNo, true);
-  },
-  
-  write: function(data) {
-    GPIO.write(this.serialPortConfig.controlPin, 1);
-  
-    UART.write(
-      this.serialPortConfig.uartNo,
-      data + receiveBuffer.rxAcc
+    this._crx(
+      cfg,
+      param.rxBufSize || 256,
+      param.rxFlowControl || false,
+      param.rxLingerMicros || 15
     );
-    
-    UART.flush(this.serialPortConfig.uartNo);
-    
-    GPIO.write(this.serialPortConfig.controlPin, 0);
-    //rxAcc = '';
-    receiveBuffer.rxAcc = '';
+
+    this._ctx(
+      cfg,
+      param.txBufSize || 256,
+      param.txFlowControl || false
+    );
+
+    // Apply arch-specific config
+    if (this._arch !== undefined) {
+      this._arch.scfg(uartNo, cfg, param);
     }
-};
- 
 
-SerialPort2.init(serialPortConfig);
+    let res = this._cfg(uartNo, cfg);
+
+    this._free(cfg);
+    cfg = null;
+
+    return res;
+  },
+
+  // ## **`UART.setDispatcher(uartNo, callback, userdata)`**
+  // Set UART dispatcher
+  // callback which gets invoked when there is a new data in the input buffer
+  // or when the space becomes available on the output buffer.
+  //
+  // Callback receives the following arguments: `(uartNo, userdata)`.
+  setDispatcher: ffi('void mgos_uart_set_dispatcher(int, void(*)(int, userdata), userdata)'),
 
 
-// Send UART data every second
-Timer.set(2000 /* milliseconds */, Timer.REPEAT, function() {
+  setFlowControl: function(pin) {
+    this.controlPin = pin;
+    GPIO.set_mode(this.controlPin, GPIO.MODE_OUTPUT);
+  },
+
+  init: function(modbusRequestFrame) {
+    this.readState = MODBUS_STATE_READ_DEVICE_ID;
+    this.modbusRequestFrame = modbusRequestFrame;
+  },
+
+  readBytes: function(uartNo, bytes) {
+    let n = 0; let res = ''; let buf = 'xxxxxxxxxx'; // Should be > 5
+    n = this._rd(uartNo, buf, bytes);
+    if (n > 0) {
+      res += buf.slice(0, n);
+    }
+    print("Read  ", res);
+    return res;
+  },
+
+  readID: function(uartNo) {
+    let id = this.readBytes(uartNo, 1);
+    this.modbusRequestFrame.id = id;
+    print("ID is ", id);
+    this.readState = MODBUS_STATE_READ_FUNC;
+  },
+
+  readFunc: function() {
+    let func = this.readBytes(uartNo, 1);
+    this.modbusRequestFrame.func = func;
+    print("Func is ", func);
+    this.readState = MODBUS_STATE_READ_ADDRESS;
+  },
+
+  readAddress: function() {
+    let address = this.readBytes(uartNo, 2);
+    this.modbusRequestFrame.address = address;
+    let addr = address.at(0) << 8 | address.at(1);
+    print("Address is ", addr);
+    this.readState = MODBUS_STATE_READ_LENGTH;
+  }, 
+
+  readLength: function() {
+    let len = this.readBytes(uartNo, 2);
+    this.modbusRequestFrame.length = len;
+    print("len is ", len);
+    this.readState = MODBUS_STATE_READ_READ_CRC;
+  },
+
+  readData: function() {
+
+  },
+
+  readCrc: function () {
+    let crc = this.readBytes(uartNo, 2);
+    this.modbusRequestFrame.crc = crc;
+    print("crc is ", crc);
+    this.readState = -1;
+    this.checkCrc();
+  },
+
+  checkCrc: function () {
+    print("checking crc ..");
+  },
+
+  processRequest: function() {
+    print("processing request");
+  },
+
+
+  // ## **`UART.write(uartNo, data)`**
+  // Write data to the buffer. Returns number of bytes written.
+  //
+  // Example usage: `UART.write(1, "foobar")`, in this case, 6 bytes will be written.
+  write: function(uartNo, data) {
+    GPIO.write(this.controlPin, 1);
+
+    this._wr(uartNo, data, data.length);
+
+    this.flush(uartNo);
+    GPIO.write(this.controlPin, 0);
+  },
+
+  // ## **`UART.writeAvail(uartNo)`**
+  // Return amount of space available in the output buffer.
+  writeAvail: ffi('int mgos_uart_write_avail(int)'),
+
+  // ## **`UART.read(uartNo)`**
+  // It never blocks, and returns a string containing
+  // read data (which will be empty if there's no data available).
+  read2: function(uartNo) {
+    let n = 0; let res = ''; let buf = 'xxxxxxxxxx'; // Should be > 5
+    while ((n = this._rd(uartNo, buf, buf.length)) > 0) {
+      res += buf.slice(0, n);
+    }
+    return res;
+  },
+
+  read: function(uartNo) {
+    print('Read called ', uartNo);
+    print('read state ', this.readState);
+    
+    if (this.readState === MODBUS_STATE_READ_DEVICE_ID) {
+      return this.readID(uartNo);
+    }
+
+    if (this.readState === MODBUS_STATE_READ_FUNC) {
+      return this.readFunc();
+    }
+
+    if (this.readState === MODBUS_STATE_READ_ADDRESS) {
+      return this.readAddress();
+    }
+
+    if (this.readState === MODBUS_STATE_READ_LENGTH) {
+      return this.readLength();
+    }
+
+    if (this.readState === MODBUS_STATE_READ_READ_DATA) {
+      return this.readData();
+    } 
+
+    if (this.readState === MODBUS_STATE_READ_READ_CRC) {
+      return this.readCrc();
+    }
    
-  
-  SerialPort2.write(   'Hello UART! '
-      
-      + ' uptime: ' + JSON.stringify(Sys.uptime())
-      + ' RAM: ' + JSON.stringify(Sys.free_ram())
-      + (receiveBuffer.rxAcc.length > 0 ? (' Rx: ' + receiveBuffer.rxAcc) : '')
-      + '\n');
-        
-  
-  
-}, null);
+  },
+
+  // ## **`UART.readAvail(uartNo)`**
+  // Return amount of data available in the input buffer.
+  readAvail: ffi('int mgos_uart_read_avail(int)'),
+
+  // ## **`UART.setRxEnabled(uartNo)`**
+  // Set whether Rx is enabled.
+  setRxEnabled: ffi('void mgos_uart_set_rx_enabled(int, int)'),
+  // ## **`UART.isRxEnabled(uartNo)`**
+  // Returns whether Rx is enabled.
+  isRxEnabled: ffi('int mgos_uart_is_rx_enabled(int)'),
+
+  // ## **`UART.flush(uartNo)`**
+  // Flush the UART output buffer, wait for the data to be sent.
+  flush: ffi('void mgos_uart_flush(int)'),
+};
+
+// Load arch-specific API
+//load('api_arch_uart.js');
