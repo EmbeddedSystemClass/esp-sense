@@ -6,7 +6,7 @@
   "scripts": {
     "flash": "mos build --arch esp32 && mos flash",
     "fs": "sh upload.sh",
-    "win-fs": "upload.bat",
+    "wfs": "upload.bat",
     "init-js": "mos put fs/init.js && mos call Sys.Reboot && mos console",
     "console": "mos console"
   },

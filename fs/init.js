@@ -72,7 +72,7 @@ SerialPort2.init(serialPortConfig, receiveBuffer);
 Timer.set(2000 /* milliseconds */, Timer.REPEAT, function() {
    
   
-  SerialPort2.write(   'Hello UART! '
+  SerialPort2.write(   'Hello UART 2! '
       + (receiveBuffer.rxAcc.length > 0 ? (' Rx: ' + receiveBuffer.rxAcc) : '')
       + ' uptime: ' + JSON.stringify(Sys.uptime())
       + ' RAM: ' + JSON.stringify(Sys.free_ram())
