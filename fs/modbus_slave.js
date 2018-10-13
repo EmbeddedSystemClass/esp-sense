@@ -6,6 +6,11 @@ let ModbusHelper = {
 let ModbusSlave = {
     
     deviceId: 0,
+
+    setSerial: function(serial) {
+        this.serial = serial;
+    },
+
     read: function() {
         print("read ", this.deviceId);
     }, 
@@ -50,8 +55,46 @@ let ModbusSlave = {
 
     },
 
-    processRequest: function(requestFrame, serial) {
+    processRequest: function(requestFrame) {
         print('Device Process Request', this.deviceId);
+
+        if (requestFrame.func === MODBUS_FUNC_READ_COILS) {
+
+        }
+
+        if (requestFrame.func === MODBUS_FUNC_READ_DISCRETE_INPUTS) {
+            
+        }
+
+        if (requestFrame.func === MODBUS_FUNC_READ_HOLDING_REGISTERS) {
+            
+        }
+
+        if (requestFrame.func === MODBUS_FUNC_READ_INPUT_REGISTERS) {
+            
+        }
+
+        if (requestFrame.func === MODBUS_FUNC_WRITE_SINGLE_COIL) {
+            
+        }
+
+
+        if (requestFrame.func === MODBUS_FUNC_WRITE_SINGLE_REGISTER) {
+            
+        }
+
+
+
+        if (requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_COILS) {
+            
+        }
+
+
+        if (requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS) {
+            
+        }
+
+
         let ptr = RS485.calloc(100, 1);
         let dw = DataView.create(ptr, 0, 100);
         dw.setUint8(0, requestFrame.id); //id
@@ -67,7 +110,7 @@ let ModbusSlave = {
         print("C Is  ", c);
     
         let s = mkstr(ptr, 6);
-        serial.write(s, 6);
+        this.serial.write(s, 6);
     
         print("processing done");
     }

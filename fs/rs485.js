@@ -8,6 +8,17 @@ let MODBUS_STATE_READ_LENGTH=3;
 let MODBUS_STATE_READ_READ_DATA=4;
 let MODBUS_STATE_READ_READ_CRC=5;
 
+let MODBUS_FUNC_READ_COILS = 0x01;
+let MODBUS_FUNC_READ_DISCRETE_INPUTS = 0x02;
+let MODBUS_FUNC_READ_HOLDING_REGISTERS = 0x03;
+let MODBUS_FUNC_READ_INPUT_REGISTERS = 0x04;
+let MODBUS_FUNC_WRITE_SINGLE_COIL = 0x05;
+let MODBUS_FUNC_WRITE_SINGLE_REGISTER = 0x06;
+let MODBUS_FUNC_WRITE_MULTIPLE_COILS = 0x0f;
+let MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS = 0x10;
+
+
+
 let RS485 = {
   _free: ffi('void free(void *)'),
   _cdef: ffi('void *mgos_uart_config_get_default(int)'),
@@ -78,6 +89,10 @@ let RS485 = {
 
   initDevices: function(devices) {
     this.devices = devices;
+    for (let i in this.devices) {
+      let device = this.devices[i];
+      device.setSerial(this);
+    }
   },
 
   readBytes: function(bytes) {
@@ -153,7 +168,7 @@ let RS485 = {
     for (let i in this.devices) {
       let device = this.devices[i];
       if (device.deviceId === this.modbusRequestFrame.id) {
-        device.processRequest(this.modbusRequestFrame, this);
+        device.processRequest(this.modbusRequestFrame);
       }
     }
     
