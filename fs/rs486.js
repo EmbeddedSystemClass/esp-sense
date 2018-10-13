@@ -17,30 +17,7 @@ let RS485 = {
   _cfg: ffi('int mgos_uart_configure(int, void *)'),
   _wr: ffi('int mgos_uart_write(int, char *, int)'),
   _rd: ffi('int mgos_uart_read(int, void *, int)'),
-
-  // ## **`UART.setDispatcher(uartNo, callback, userdata)`**
-  // Set UART dispatcher
-  // callback which gets invoked when there is a new data in the input buffer
-  // or when the space becomes available on the output buffer.
-  //
-  // Callback receives the following arguments: `(uartNo, userdata)`.
-  setDispatcher: ffi('void mgos_uart_set_dispatcher(int, void(*)(int, userdata), userdata)'),
-
-   // ## **`UART.readAvail(uartNo)`**
-  // Return amount of data available in the input buffer.
-  readAvail: ffi('int mgos_uart_read_avail(int)'),
-
-  // ## **`UART.setRxEnabled(uartNo)`**
-  // Set whether Rx is enabled.
-  setRxEnabled: ffi('void mgos_uart_set_rx_enabled(int, int)'),
-  // ## **`UART.isRxEnabled(uartNo)`**
-  // Returns whether Rx is enabled.
-  isRxEnabled: ffi('int mgos_uart_is_rx_enabled(int)'),
-
-  // ## **`UART.flush(uartNo)`**
-  // Flush the UART output buffer, wait for the data to be sent.
-  flush: ffi('void mgos_uart_flush(int)'),
-
+  // calloc: ffi('void *calloc(int, int)'),
  
   setConfig: function(uartNo, param) {
     let cfg = this._cdef(uartNo);
@@ -76,21 +53,113 @@ let RS485 = {
     return res;
   },
 
-  init: function(modbusReceive) {
-    this.modbusReceive = modbusReceive;
-    this.readState = MODBUS_STATE_READ_DEVICE_ID;
-  },
+  // ## **`UART.setDispatcher(uartNo, callback, userdata)`**
+  // Set UART dispatcher
+  // callback which gets invoked when there is a new data in the input buffer
+  // or when the space becomes available on the output buffer.
+  //
+  // Callback receives the following arguments: `(uartNo, userdata)`.
+  setDispatcher: ffi('void mgos_uart_set_dispatcher(int, void(*)(int, userdata), userdata)'),
+
 
   setFlowControl: function(pin) {
     this.controlPin = pin;
     GPIO.set_mode(this.controlPin, GPIO.MODE_OUTPUT);
   },
 
+  init: function(modbusRequestFrame) {
+    this.readState = MODBUS_STATE_READ_DEVICE_ID;
+    this.modbusRequestFrame = modbusRequestFrame;
+  },
+
+  readBytes: function(uartNo, bytes) {
+    let n = 0; let res = ''; let buf = 'xxxxxxxxxx'; // Should be > 5
+    n = this._rd(uartNo, buf, bytes);
+    if (n > 0) {
+      res += buf.slice(0, n);
+    }
+    print("Read  ", res);
+    return res;
+  },
+
+  readID: function(uartNo) {
+    let id = this.readBytes(uartNo, 1);
+    this.modbusRequestFrame.id = id;
+    print("ID is ", id);
+    this.readState = MODBUS_STATE_READ_FUNC;
+  },
+ 
+  readFunc: function(uartNo) {
+    this.modbusRequestFrame.func = this.readInt8(uartNo);
+    print("Func is ", this.modbusRequestFrame.func);
+    this.readState = MODBUS_STATE_READ_ADDRESS;
+  },
+ 
+  readInt8: function(uartNo) {
+    let valBuf = this.readBytes(uartNo, 1);
+    
+    let value = valBuf.at(0);
+    print("value is ", value);
+    return value;
+  }, 
+
+  readInt16: function(uartNo) {
+    let valBuf = this.readBytes(uartNo, 2);
+    
+    let value = valBuf.at(0) << 8 | valBuf.at(1);
+    print("value is ", value);
+    return value;
+  }, 
+
+  readAddress: function(uartNo) {
+    this.modbusRequestFrame.address = this.readInt16(uartNo);
+    print("Address is ", this.modbusRequestFrame.address);
+    this.readState = MODBUS_STATE_READ_LENGTH;
+  }, 
+ 
+
+  readLength: function(uartNo) {
+    this.modbusRequestFrame.length = this.readInt16(uartNo);
+    print("len is ", this.modbusRequestFrame.length);
+    this.readState = MODBUS_STATE_READ_READ_CRC;
+  },
+
+  readData: function(uartNo) {
+
+  },
+
+  readCrc: function (uartNo) {
+    this.modbusRequestFrame.crc = this.readInt16(uartNo);
+    print("crc is ", this.modbusRequestFrame.crc);
+    this.readState = MODBUS_STATE_READ_DEVICE_ID;
+    this.checkCrc(uartNo);
+  },
+
+  checkCrc: function (uartNo) {
+    print("checking crc ..");
+    this.processRequest(uartNo);
+  },
+
+  processRequest: function(uartNo) {
+    print("processing request", uartNo);
+
+    // let ptr = RS485.calloc(100, 1);
+    // let dw = DataView.create(ptr, 0, 100);
+
+    // dw.setUint8(0, this.modbusRequestFrame.id);
+    // dw.setUint8(1, this.modbusRequestFrame.func);
+    // dw.setUint8(2, 1);
+    // dw.setUint8(3, 1);
+    // dw.setUint16(4, 0xffff);
+    // this.write(uartNo, ptr, 6);
+  },
+
+
   // ## **`UART.write(uartNo, data)`**
   // Write data to the buffer. Returns number of bytes written.
   //
   // Example usage: `UART.write(1, "foobar")`, in this case, 6 bytes will be written.
-  write: function(uartNo, data) {
+  write2: function(uartNo, data) {
     GPIO.write(this.controlPin, 1);
 
     this._wr(uartNo, data, data.length);
@@ -99,34 +168,14 @@ let RS485 = {
     GPIO.write(this.controlPin, 0);
   },
 
-  readID: function() {
+  write: function(uartNo, data, length) {
+    GPIO.write(this.controlPin, 1);
 
+    this._wr(uartNo, data, length);
+
+    this.flush(uartNo);
+    GPIO.write(this.controlPin, 0);
   },
-
-  readFunc: function() {
-
-  },
-
-  readAddress: function() {
-
-  }, 
-
-  readLength: function() {
-
-  },
-
-  readData: function() {
-
-  },
-
-  readCrc: function () {
-
-  },
-
-  checkCrc: function () {
-
-  },
-
 
   // ## **`UART.writeAvail(uartNo)`**
   // Return amount of space available in the output buffer.
@@ -135,7 +184,7 @@ let RS485 = {
   // ## **`UART.read(uartNo)`**
   // It never blocks, and returns a string containing
   // read data (which will be empty if there's no data available).
-  read: function(uartNo) {
+  read2: function(uartNo) {
     let n = 0; let res = ''; let buf = 'xxxxxxxxxx'; // Should be > 5
     while ((n = this._rd(uartNo, buf, buf.length)) > 0) {
       res += buf.slice(0, n);
@@ -143,28 +192,50 @@ let RS485 = {
     return res;
   },
 
-  read2: function(uartNo) {
+  read: function(uartNo) {
+    print('Read called ', uartNo);
+    print('read state ', this.readState);
     
-    switch(this.readState) {
-      case MODBUS_STATE_READ_DEVICE_ID:
-        return this.readID();
-      case MODBUS_STATE_READ_FUNC:
-        return this.readFunc();
-      case MODBUS_STATE_READ_ADDRESS:
-        return this.readAddress();
+    if (this.readState === MODBUS_STATE_READ_DEVICE_ID) {
+      return this.readID(uartNo);
+    }
 
-      case MODBUS_STATE_READ_LENGTH:
-        return this.readLength();
+    if (this.readState === MODBUS_STATE_READ_FUNC) {
+      return this.readFunc(uartNo);
+    }
 
-      case MODBUS_STATE_READ_READ_DATA:
-        return this.readData();
-      case MODBUS_STATE_READ_READ_CRC:
-        return this.readCrc();
+    if (this.readState === MODBUS_STATE_READ_ADDRESS) {
+      return this.readAddress(uartNo);
+    }
 
-    };
-    
-  }
- 
+    if (this.readState === MODBUS_STATE_READ_LENGTH) {
+      return this.readLength(uartNo);
+    }
+
+    if (this.readState === MODBUS_STATE_READ_READ_DATA) {
+      return this.readData(uartNo);
+    } 
+
+    if (this.readState === MODBUS_STATE_READ_READ_CRC) {
+      return this.readCrc(uartNo);
+    }
+   
+  },
+
+  // ## **`UART.readAvail(uartNo)`**
+  // Return amount of data available in the input buffer.
+  readAvail: ffi('int mgos_uart_read_avail(int)'),
+
+  // ## **`UART.setRxEnabled(uartNo)`**
+  // Set whether Rx is enabled.
+  setRxEnabled: ffi('void mgos_uart_set_rx_enabled(int, int)'),
+  // ## **`UART.isRxEnabled(uartNo)`**
+  // Returns whether Rx is enabled.
+  isRxEnabled: ffi('int mgos_uart_is_rx_enabled(int)'),
+
+  // ## **`UART.flush(uartNo)`**
+  // Flush the UART output buffer, wait for the data to be sent.
+  flush: ffi('void mgos_uart_flush(int)'),
 };
 
 // Load arch-specific API

@@ -87,9 +87,6 @@ SerialPort2.init(serialPortConfig, receiveBuffer);
 
 
 // Send UART data every second
-Timer.set(2000 /* milliseconds */, Timer.REPEAT, function() {
-  
-  SerialPort2.write(   'Hello UART 2! ');
-    
-  
-}, null);
+//Timer.set(2000 /* milliseconds */, Timer.REPEAT, function() {
+ // SerialPort2.write(   'Hello UART 2! ');
+//}, null);
