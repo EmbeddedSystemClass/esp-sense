@@ -52,6 +52,8 @@ let RS485 = {
     this._free(cfg);
     cfg = null;
 
+    this.uartNo = uartNo;
+
     return res;
   },
 
@@ -78,9 +80,9 @@ let RS485 = {
     this.devices = devices;
   },
 
-  readBytes: function(uartNo, bytes) {
+  readBytes: function(bytes) {
     let n = 0; let res = ''; let buf = 'xxxxxxxxxx'; // Should be > 5
-    n = this._rd(uartNo, buf, bytes);
+    n = this._rd(this.uartNo, buf, bytes);
     if (n > 0) {
       res += buf.slice(0, n);
     }
@@ -88,70 +90,70 @@ let RS485 = {
     return res;
   },
 
-  readID: function(uartNo) {
-    this.modbusRequestFrame.id = this.readInt8(uartNo);;
+  readID: function() {
+    this.modbusRequestFrame.id = this.readInt8();;
     print("ID is ", this.modbusRequestFrame.id);
     this.readState = MODBUS_STATE_READ_FUNC;
   },
    
-  readFunc: function(uartNo) {
-    this.modbusRequestFrame.func = this.readInt8(uartNo);
+  readFunc: function() {
+    this.modbusRequestFrame.func = this.readInt8();
     print("Func is ", this.modbusRequestFrame.func);
     this.readState = MODBUS_STATE_READ_ADDRESS;
   },
  
-  readInt8: function(uartNo) {
-    let valBuf = this.readBytes(uartNo, 1);
+  readInt8: function() {
+    let valBuf = this.readBytes(1);
     
     let value = valBuf.at(0);
     print("value is ", value);
     return value;
   }, 
 
-  readInt16: function(uartNo) {
-    let valBuf = this.readBytes(uartNo, 2);
+  readInt16: function() {
+    let valBuf = this.readBytes(2);
     
     let value = valBuf.at(0) << 8 | valBuf.at(1);
     print("value is ", value);
     return value;
   }, 
 
-  readAddress: function(uartNo) {
-    this.modbusRequestFrame.address = this.readInt16(uartNo);
+  readAddress: function() {
+    this.modbusRequestFrame.address = this.readInt16();
     print("Address is ", this.modbusRequestFrame.address);
     this.readState = MODBUS_STATE_READ_LENGTH;
   }, 
  
 
-  readLength: function(uartNo) {
-    this.modbusRequestFrame.length = this.readInt16(uartNo);
+  readLength: function() {
+    this.modbusRequestFrame.length = this.readInt16();
     print("len is ", this.modbusRequestFrame.length);
     this.readState = MODBUS_STATE_READ_READ_CRC;
   },
 
-  readData: function(uartNo) {
+  readData: function() {
 
   },
 
-  readCrc: function (uartNo) {
-    this.modbusRequestFrame.crc = this.readInt16(uartNo);
+  readCrc: function () {
+    this.modbusRequestFrame.crc = this.readInt16();
     print("crc is ", this.modbusRequestFrame.crc);
     this.readState = MODBUS_STATE_READ_DEVICE_ID;
-    this.checkCrc(uartNo);
+    this.checkCrc();
   },
 
-  checkCrc: function (uartNo) {
+  checkCrc: function () {
     print("checking crc ..");
-    this.processRequest(uartNo);
+    this.processRequest();
   },
 
-  processRequest: function(uartNo) {
+  processRequest: function() {
     print("processing request");
 
     for (let i in this.devices) {
       let device = this.devices[i];
       if (device.deviceId === this.modbusRequestFrame.id) {
-        device.processRequest(this.modbusRequestFrame, this, uartNo);
+        device.processRequest(this.modbusRequestFrame, this);
       }
     }
     
@@ -191,12 +193,12 @@ let RS485 = {
     GPIO.write(this.controlPin, 0);
   },
 
-  write: function(uartNo, data, length) {
+  write: function(data, length) {
     GPIO.write(this.controlPin, 1);
 
-    this._wr(uartNo, data, length);
+    this._wr(this.uartNo, data, length);
 
-    this.flush(uartNo);
+    this.flush(this.uartNo);
     GPIO.write(this.controlPin, 0);
   },
 

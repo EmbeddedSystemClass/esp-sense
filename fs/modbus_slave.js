@@ -50,7 +50,7 @@ let ModbusSlave = {
 
     },
 
-    processRequest: function(requestFrame, serial, uartNo) {
+    processRequest: function(requestFrame, serial) {
         print('Device Process Request', this.deviceId);
         let ptr = RS485.calloc(100, 1);
         let dw = DataView.create(ptr, 0, 100);
@@ -67,7 +67,7 @@ let ModbusSlave = {
         print("C Is  ", c);
     
         let s = mkstr(ptr, 6);
-        serial.write(uartNo, s, 6);
+        serial.write(s, 6);
     
         print("processing done");
     }
