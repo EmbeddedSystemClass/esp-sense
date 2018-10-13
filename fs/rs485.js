@@ -74,6 +74,10 @@ let RS485 = {
     this.modbusRequestFrame = modbusRequestFrame;
   },
 
+  initDevices: function(devices) {
+    this.devices = devices;
+  },
+
   readBytes: function(uartNo, bytes) {
     let n = 0; let res = ''; let buf = 'xxxxxxxxxx'; // Should be > 5
     n = this._rd(uartNo, buf, bytes);
@@ -143,23 +147,30 @@ let RS485 = {
 
   processRequest: function(uartNo) {
     print("processing request");
-    
-    let ptr = RS485.calloc(100, 1);
-    let dw = DataView.create(ptr, 0, 100);
-    dw.setUint8(0, this.modbusRequestFrame.id); //id
-    dw.setUint8(1, this.modbusRequestFrame.func); //fc
-    dw.setUint8(2, 1); // byte count
-    dw.setUint8(3, 1); // data
-    
-    //dw.setUint16(4, 0xffff); //crc
-    let c = RS485.crc16(ptr, 4);
-    dw.setUint8(4, (c >> 8) & 0xff ); 
-    dw.setUint8(5, (c  & 0xff ));
-    
-    print("C Is  ", c);
 
-    let s = mkstr(ptr, 6);
-    this.write(uartNo, s, 6);
+    for (let i in this.devices) {
+      let device = this.devices[i];
+      if (device.deviceId === this.modbusRequestFrame.id) {
+        device.processRequest(this.modbusRequestFrame, this, uartNo);
+      }
+    }
+    
+    // let ptr = RS485.calloc(100, 1);
+    // let dw = DataView.create(ptr, 0, 100);
+    // dw.setUint8(0, this.modbusRequestFrame.id); //id
+    // dw.setUint8(1, this.modbusRequestFrame.func); //fc
+    // dw.setUint8(2, 1); // byte count
+    // dw.setUint8(3, 1); // data
+    
+     
+    // let c = RS485.crc16(ptr, 4);
+    // dw.setUint8(4, (c >> 8) & 0xff ); 
+    // dw.setUint8(5, (c  & 0xff ));
+    
+    // print("C Is  ", c);
+
+    // let s = mkstr(ptr, 6);
+    // this.write(uartNo, s, 6);
 
     print("processing done");
 

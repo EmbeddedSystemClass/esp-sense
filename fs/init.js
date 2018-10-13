@@ -4,8 +4,20 @@ load('api_uart.js');
 load('api_sys.js');
 load('api_gpio.js');
 load("rs485.js");
-//load("modbus_rtu.js");
+load("modbus_slave.js");
 //load('hello.js');
+
+
+let slave1 = Object.create(ModbusSlave);
+slave1.deviceId = 1;
+
+let slave2 = Object.create(ModbusSlave);
+slave2.deviceId = 2;
+
+let devices = [
+  slave1,
+  slave2
+];
 
 let modbusRequestFrame = {
   id: -1,
@@ -16,7 +28,7 @@ let modbusRequestFrame = {
   crc: 0,
   receiveBuffer: ''
 };
- 
+
 let receiveBuffer = {
   rxAcc: ''
 };
@@ -38,6 +50,7 @@ let serialPortConfig = {
 
 RS485.setFlowControl(23);
 RS485.init(modbusRequestFrame);
+RS485.initDevices(devices);
 
 let SerialPort2 = {
   init: function(serialPortConfig, receiveBuffer) {
