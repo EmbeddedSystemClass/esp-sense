@@ -11,8 +11,59 @@ load("modbus_slave.js");
 let slave1 = Object.create(ModbusSlave);
 slave1.deviceId = 1;
 
+let config1 = {
+  deviceId: 1,
+  coils: {
+    offset: 0,
+    size: 100
+  },
+  discreteInputs: {
+    offset: 0,
+    size: 100,
+    le: false
+  },
+  holdingRegisters: {
+    offset: 0,
+    size: 100,
+    le: false
+  },
+  inputRegisters: {
+    offset: 0,
+    size: 100,
+    le: false
+  }
+};
+
+slave1.init(config1);
+
+let config2 = {
+  deviceId: 2,
+  coils: {
+    offset: 0,
+    size: 100,
+    le: false
+  },
+  discreteInputs: {
+    offset: 0,
+    size: 100,
+    le: false
+  },
+  holdingRegisters: {
+    offset: 0,
+    size: 100,
+    le: false
+  },
+  inputRegisters: {
+    offset: 0,
+    size: 100,
+    le: false
+  }
+};
+
 let slave2 = Object.create(ModbusSlave);
 slave2.deviceId = 2;
+
+slave2.init(config2);
 
 let devices = [
   slave1,
