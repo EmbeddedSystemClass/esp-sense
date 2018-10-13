@@ -48,7 +48,10 @@ def main():
         
         ##logger.info(master.execute(1, cst.READ_HOLDING_REGISTERS, 5, 1))
 
-        logger.info(master.execute(2, cst.READ_COILS, 1, 1))
+        logger.info(master.execute(1, cst.READ_COILS, 1, 1))
+        logger.info(master.execute(1, cst.READ_DISCRETE_INPUTS, 1, 1))
+        logger.info(master.execute(1, cst.READ_HOLDING_REGISTERS, 1, 1))
+        logger.info(master.execute(1, cst.READ_INPUT_REGISTERS, 1, 1))
 
         #send some queries
         #logger.info(master.execute(1, cst.READ_COILS, 0, 10))

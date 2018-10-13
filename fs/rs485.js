@@ -18,7 +18,6 @@ let MODBUS_FUNC_WRITE_MULTIPLE_COILS = 0x0f;
 let MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS = 0x10;
 
 
-
 let RS485 = {
   _free: ffi('void free(void *)'),
   _cdef: ffi('void *mgos_uart_config_get_default(int)'),
