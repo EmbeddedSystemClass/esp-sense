@@ -36,7 +36,7 @@ let SerialPort2 = {
           // Received new data: print it immediately to the console, and also
           // accumulate in the "rxAcc" variable which will be echoed back to UART later
           let data = UART.read(uartNo);
-          print('Received UART data:', data);
+          //print('Received UART data:', data);
           //rxAcc += data;
           that.receiveBuffer.rxAcc += data;
         }

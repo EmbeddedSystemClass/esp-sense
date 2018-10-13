@@ -4,7 +4,10 @@
   "description": "```bash mos build --arch esp32 && mos flash ```",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "flash": "mos build --arch esp32 && mos flash",
+    "fs": "mos put fs/*.js && mos call Sys.Reboot",
+    "init-js": "mos put fs/init.js && mos call Sys.Reboot && mos console",
+    "console": "mos console"
   },
   "repository": {
     "type": "git",
