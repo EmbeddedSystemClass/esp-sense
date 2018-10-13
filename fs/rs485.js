@@ -5,8 +5,9 @@ let MODBUS_STATE_READ_DEVICE_ID=0;
 let MODBUS_STATE_READ_FUNC=1;
 let MODBUS_STATE_READ_ADDRESS=2;
 let MODBUS_STATE_READ_LENGTH=3;
-let MODBUS_STATE_READ_READ_DATA=4;
-let MODBUS_STATE_READ_READ_CRC=5;
+let MODBUS_STATE_READ_BYTE_COUNT=4;
+let MODBUS_STATE_READ_READ_DATA=5;
+let MODBUS_STATE_READ_READ_CRC=6;
 
 let MODBUS_FUNC_READ_COILS = 0x01;
 let MODBUS_FUNC_READ_DISCRETE_INPUTS = 0x02;
@@ -135,9 +136,28 @@ let RS485 = {
   readAddress: function() {
     this.modbusRequestFrame.address = this.readInt16();
     print("Address is ", this.modbusRequestFrame.address);
-    this.readState = MODBUS_STATE_READ_LENGTH;
+
+    if (this.modbusRequestFrame.func === MODBUS_FUNC_READ_COILS ||
+      this.modbusRequestFrame.func === MODBUS_FUNC_READ_DISCRETE_INPUTS ||
+      this.modbusRequestFrame.func === MODBUS_FUNC_READ_HOLDING_REGISTERS ||
+      this.modbusRequestFrame.func === MODBUS_FUNC_READ_INPUT_REGISTERS || 
+      this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_COILS || 
+      this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS) {
+        this.readState = MODBUS_STATE_READ_LENGTH;
+      }
+
+    if (this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_SINGLE_COIL ||
+        this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_SINGLE_REGISTER ) {
+      this.readState = MODBUS_STATE_READ_READ_DATA;
+    }
   }, 
  
+
+  readByteCount: function() {
+    this.modbusRequestFrame.byteCount = this.readInt8();
+    print("bytecount is is ", this.modbusRequestFrame.byteCount);
+    this.readState = MODBUS_STATE_READ_READ_DATA;
+  },
 
   readLength: function() {
     this.modbusRequestFrame.length = this.readInt16();
@@ -146,6 +166,24 @@ let RS485 = {
   },
 
   readData: function() {
+    let length = 0;
+
+    if (this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_COILS) {
+      length = this.modbusRequestFrame.byteCount;
+    }
+
+    if (this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS) {
+      length = this.modbusRequestFrame.byteCount;
+    }
+
+    if (this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_SINGLE_COIL ||
+        this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_SINGLE_REGISTER ) {
+          length = 2;
+        }
+
+    this.modbusRequestFrame.data = this.readBytes(length);
+
+    this.readState = MODBUS_STATE_READ_READ_CRC;
 
   },
 

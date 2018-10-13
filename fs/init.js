@@ -25,6 +25,7 @@ let modbusRequestFrame = {
   address: 0,
   length: 0,
   data: '',
+  byteCount: 0,
   crc: 0,
   receiveBuffer: ''
 };

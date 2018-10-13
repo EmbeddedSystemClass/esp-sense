@@ -4,8 +4,13 @@ let ModbusHelper = {
 };
 
 let ModbusSlave = {
-    
     deviceId: 0,
+
+    init: function(deviceId) {
+        this.deviceId = deviceId;
+        //this.ptr = RS485.calloc(255, 1);
+        //this.dw = DataView.create(this.ptr, 0, 255);
+    },
 
     setSerial: function(serial) {
         this.serial = serial;
@@ -112,21 +117,96 @@ let ModbusSlave = {
 
 
     writeSingleCoil: function(requestFrame) {
+        print("writeSingleCoil ");
+
+
+        let ptr = RS485.calloc(100, 1);
+        let dw = DataView.create(ptr, 0, 100);
+        dw.setUint8(0, requestFrame.id); //id
+        dw.setUint8(1, requestFrame.func); //fc
+
+        dw.setUint16(2, requestFrame.address); // output address
+
+        dw.setUint16(4, 0xffff); // output value
+        
+        let c = RS485.crc16(ptr, 6);
+        dw.setUint8(6, (c >> 8) & 0xff ); 
+        dw.setUint8(7, (c  & 0xff ));
+        
+        print("C Is  ", c);
+    
+        let s = mkstr(ptr, 8);
+        this.serial.write(s, 8);
 
     },
 
 
     writeSingleRegister: function(requestFrame) {
+        print("writeSingleRegister ");
 
+
+        let ptr = RS485.calloc(100, 1);
+        let dw = DataView.create(ptr, 0, 100);
+        dw.setUint8(0, requestFrame.id); //id
+        dw.setUint8(1, requestFrame.func); //fc
+
+        dw.setUint16(2, requestFrame.address); // output address
+
+        dw.setUint16(4, 0x0002); // register value
+        
+        let c = RS485.crc16(ptr, 6);
+        dw.setUint8(6, (c >> 8) & 0xff ); 
+        dw.setUint8(7, (c  & 0xff ));
+        
+        print("C Is  ", c);
+    
+        let s = mkstr(ptr, 8);
+        this.serial.write(s, 8);
     },
 
     writeMultipleCoils: function(requestFrame) {
+        print("writeMultipleCoils ");
 
+        let ptr = RS485.calloc(100, 1);
+        let dw = DataView.create(ptr, 0, 100);
+        dw.setUint8(0, requestFrame.id); //id
+        dw.setUint8(1, requestFrame.func); //fc
+
+        dw.setUint16(2, requestFrame.address); // output address
+
+        dw.setUint16(4, requestFrame.length); // quantity
+        
+        let c = RS485.crc16(ptr, 6);
+        dw.setUint8(6, (c >> 8) & 0xff ); 
+        dw.setUint8(7, (c  & 0xff ));
+        
+        print("C Is  ", c);
+    
+        let s = mkstr(ptr, 8);
+        this.serial.write(s, 8);
     },
 
 
     writeMultipleRegisters: function(requestFrame) {
+        print("writeMultipleRegisters ");
 
+        let ptr = RS485.calloc(100, 1);
+        let dw = DataView.create(ptr, 0, 100);
+        dw.setUint8(0, requestFrame.id); //id
+        dw.setUint8(1, requestFrame.func); //fc
+
+        dw.setUint16(2, requestFrame.address); // output address
+
+        dw.setUint16(4, requestFrame.length); // quantity
+        
+        let c = RS485.crc16(ptr, 6);
+        dw.setUint8(6, (c >> 8) & 0xff ); 
+        dw.setUint8(7, (c  & 0xff ));
+        
+        print("C Is  ", c);
+    
+        let s = mkstr(ptr, 8);
+        this.serial.write(s, 8);
     },
 
 
