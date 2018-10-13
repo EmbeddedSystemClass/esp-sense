@@ -1,0 +1,20 @@
+{
+  "name": "esp-sense",
+  "version": "1.0.0",
+  "description": "```bash mos build --arch esp32 && mos flash ```",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mongoose-os-apps/empty.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mongoose-os-apps/empty/issues"
+  },
+  "homepage": "https://github.com/mongoose-os-apps/empty#readme"
+}
