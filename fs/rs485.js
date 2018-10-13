@@ -85,12 +85,11 @@ let RS485 = {
   },
 
   readID: function(uartNo) {
-    let id = this.readBytes(uartNo, 1);
-    this.modbusRequestFrame.id = id;
-    print("ID is ", id);
+    this.modbusRequestFrame.id = this.readInt8(uartNo);;
+    print("ID is ", this.modbusRequestFrame.id);
     this.readState = MODBUS_STATE_READ_FUNC;
   },
- 
+   
   readFunc: function(uartNo) {
     this.modbusRequestFrame.func = this.readInt8(uartNo);
     print("Func is ", this.modbusRequestFrame.func);
@@ -147,8 +146,8 @@ let RS485 = {
     
     let ptr = RS485.calloc(100, 1);
     let dw = DataView.create(ptr, 0, 100);
-    dw.setUint8(0, 1); //id
-    dw.setUint8(1, 1); //fc
+    dw.setUint8(0, this.modbusRequestFrame.id); //id
+    dw.setUint8(1, this.modbusRequestFrame.func); //fc
     dw.setUint8(2, 1); // byte count
     dw.setUint8(3, 1); // data
     
