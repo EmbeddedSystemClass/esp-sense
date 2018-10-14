@@ -100,12 +100,7 @@ let RS485 = {
     this.controlPin = pin;
     GPIO.set_mode(this.controlPin, GPIO.MODE_OUTPUT);
   },
-
-  init2: function(modbusRequestFrame) {
-    this.readState = MODBUS_STATE_READ_DEVICE_ID;
-    this.modbusRequestFrame = modbusRequestFrame;
-  },
-
+ 
   init: function(serialPortConfig) {
     this.readState = MODBUS_STATE_READ_DEVICE_ID;
     this.modbusRequestFrame  = {
@@ -138,22 +133,7 @@ let RS485 = {
   // Enable Rx
   RS485.setRxEnabled(serialPortConfig.uartNo, true);
 },
-
-  init2: function() {
-    this.readState = MODBUS_STATE_READ_DEVICE_ID;
-    this.modbusRequestFrame  = {
-              id: -1,
-              func: 0,
-              address: 0,
-              length: 0,
-              data: '',
-              byteCount: 0,
-              crc: 0,
-              receiveBuffer: ''
-            };
-
-    this.devices = [];
-  },
+ 
  
   addDevice: function(device) {
     device.setSerial(this);
