@@ -18,7 +18,6 @@ let MODBUS_FUNC_WRITE_SINGLE_REGISTER = 0x06;
 let MODBUS_FUNC_WRITE_MULTIPLE_COILS = 0x0f;
 let MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS = 0x10;
 
-
 let RS485 = {
   _free: ffi('void free(void *)'),
   _cdef: ffi('void *mgos_uart_config_get_default(int)'),
@@ -28,6 +27,35 @@ let RS485 = {
   _cfg: ffi('int mgos_uart_configure(int, void *)'),
   _wr: ffi('int mgos_uart_write(int, char *, int)'),
   _rd: ffi('int mgos_uart_read(int, void *, int)'),
+
+  // ## **`UART.writeAvail(uartNo)`**
+  // Return amount of space available in the output buffer.
+  writeAvail: ffi('int mgos_uart_write_avail(int)'),
+
+  // ## **`UART.setDispatcher(uartNo, callback, userdata)`**
+  // Set UART dispatcher
+  // callback which gets invoked when there is a new data in the input buffer
+  // or when the space becomes available on the output buffer.
+  //
+  // Callback receives the following arguments: `(uartNo, userdata)`.
+  setDispatcher: ffi('void mgos_uart_set_dispatcher(int, void(*)(int, userdata), userdata)'),
+
+  // ## **`UART.readAvail(uartNo)`**
+  // Return amount of data available in the input buffer.
+  readAvail: ffi('int mgos_uart_read_avail(int)'),
+
+  // ## **`UART.setRxEnabled(uartNo)`**
+  // Set whether Rx is enabled.
+  setRxEnabled: ffi('void mgos_uart_set_rx_enabled(int, int)'),
+  // ## **`UART.isRxEnabled(uartNo)`**
+  // Returns whether Rx is enabled.
+  isRxEnabled: ffi('int mgos_uart_is_rx_enabled(int)'),
+
+  // ## **`UART.flush(uartNo)`**
+  // Flush the UART output buffer, wait for the data to be sent.
+  flush: ffi('void mgos_uart_flush(int)'),
+
+ 
   calloc: ffi('void *calloc(int, int)'),
   crc16: ffi('int crc16(void *, int)'),
 
@@ -68,31 +96,36 @@ let RS485 = {
     return res;
   },
 
-  // ## **`UART.setDispatcher(uartNo, callback, userdata)`**
-  // Set UART dispatcher
-  // callback which gets invoked when there is a new data in the input buffer
-  // or when the space becomes available on the output buffer.
-  //
-  // Callback receives the following arguments: `(uartNo, userdata)`.
-  setDispatcher: ffi('void mgos_uart_set_dispatcher(int, void(*)(int, userdata), userdata)'),
-
-
   setFlowControl: function(pin) {
     this.controlPin = pin;
     GPIO.set_mode(this.controlPin, GPIO.MODE_OUTPUT);
   },
 
-  init: function(modbusRequestFrame) {
+  init2: function(modbusRequestFrame) {
     this.readState = MODBUS_STATE_READ_DEVICE_ID;
     this.modbusRequestFrame = modbusRequestFrame;
   },
 
-  initDevices: function(devices) {
-    this.devices = devices;
-    for (let i in this.devices) {
-      let device = this.devices[i];
-      device.setSerial(this);
-    }
+
+  init: function() {
+    this.readState = MODBUS_STATE_READ_DEVICE_ID;
+    this.modbusRequestFrame  = {
+              id: -1,
+              func: 0,
+              address: 0,
+              length: 0,
+              data: '',
+              byteCount: 0,
+              crc: 0,
+              receiveBuffer: ''
+            };
+
+    this.devices = [];
+  },
+ 
+  addDevice: function(device) {
+    device.setSerial(this);
+    this.devices.push(device);
   },
 
   readBytes: function(bytes) {
@@ -208,41 +241,11 @@ let RS485 = {
         device.processRequest(this.modbusRequestFrame);
       }
     }
-    
-    // let ptr = RS485.calloc(100, 1);
-    // let dw = DataView.create(ptr, 0, 100);
-    // dw.setUint8(0, this.modbusRequestFrame.id); //id
-    // dw.setUint8(1, this.modbusRequestFrame.func); //fc
-    // dw.setUint8(2, 1); // byte count
-    // dw.setUint8(3, 1); // data
-    
      
-    // let c = RS485.crc16(ptr, 4);
-    // dw.setUint8(4, (c >> 8) & 0xff ); 
-    // dw.setUint8(5, (c  & 0xff ));
-    
-    // print("C Is  ", c);
-
-    // let s = mkstr(ptr, 6);
-    // this.write(uartNo, s, 6);
 
     print("processing done");
 
 
-  },
-
-
-  // ## **`UART.write(uartNo, data)`**
-  // Write data to the buffer. Returns number of bytes written.
-  //
-  // Example usage: `UART.write(1, "foobar")`, in this case, 6 bytes will be written.
-  write2: function(uartNo, data) {
-    GPIO.write(this.controlPin, 1);
-
-    this._wr(uartNo, data, data.length);
-
-    this.flush(uartNo);
-    GPIO.write(this.controlPin, 0);
   },
 
   write: function(data, length) {
@@ -252,21 +255,6 @@ let RS485 = {
 
     this.flush(this.uartNo);
     GPIO.write(this.controlPin, 0);
-  },
-
-  // ## **`UART.writeAvail(uartNo)`**
-  // Return amount of space available in the output buffer.
-  writeAvail: ffi('int mgos_uart_write_avail(int)'),
-
-  // ## **`UART.read(uartNo)`**
-  // It never blocks, and returns a string containing
-  // read data (which will be empty if there's no data available).
-  read2: function(uartNo) {
-    let n = 0; let res = ''; let buf = 'xxxxxxxxxx'; // Should be > 5
-    while ((n = this._rd(uartNo, buf, buf.length)) > 0) {
-      res += buf.slice(0, n);
-    }
-    return res;
   },
 
   read: function(uartNo) {
@@ -297,22 +285,8 @@ let RS485 = {
       return this.readCrc(uartNo);
     }
    
-  },
+  }
 
-  // ## **`UART.readAvail(uartNo)`**
-  // Return amount of data available in the input buffer.
-  readAvail: ffi('int mgos_uart_read_avail(int)'),
-
-  // ## **`UART.setRxEnabled(uartNo)`**
-  // Set whether Rx is enabled.
-  setRxEnabled: ffi('void mgos_uart_set_rx_enabled(int, int)'),
-  // ## **`UART.isRxEnabled(uartNo)`**
-  // Returns whether Rx is enabled.
-  isRxEnabled: ffi('int mgos_uart_is_rx_enabled(int)'),
-
-  // ## **`UART.flush(uartNo)`**
-  // Flush the UART output buffer, wait for the data to be sent.
-  flush: ffi('void mgos_uart_flush(int)'),
 };
 
 // Load arch-specific API
