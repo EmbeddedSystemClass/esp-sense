@@ -48,10 +48,13 @@ def main():
         
         ##logger.info(master.execute(1, cst.READ_HOLDING_REGISTERS, 5, 1))
 
-        logger.info(master.execute(1, cst.READ_COILS, 1, 1))
-        logger.info(master.execute(1, cst.READ_DISCRETE_INPUTS, 1, 1))
+        #logger.info(master.execute(2, cst.READ_COILS, 1, 1))
+        #logger.info(master.execute(2, cst.READ_COILS, 2, 1))
+        #logger.info(master.execute(2, cst.READ_COILS, 3, 1))
+
+        #logger.info(master.execute(2, cst.READ_DISCRETE_INPUTS, 1, 1))
         # logger.info(master.execute(1, cst.READ_HOLDING_REGISTERS, 1, 1))
-        logger.info(master.execute(1, cst.READ_INPUT_REGISTERS, 1, 1))
+        # logger.info(master.execute(1, cst.READ_INPUT_REGISTERS, 1, 1))
         
         # logger.info(master.execute(1, cst.WRITE_SINGLE_COIL, 1, output_value=1))
         # logger.info(master.execute(1, cst.WRITE_SINGLE_REGISTER, 1, output_value=2))
@@ -59,7 +62,7 @@ def main():
         # logger.info(master.execute(1, cst.WRITE_MULTIPLE_COILS, 0, output_value=[1, 1]))
         # logger.info(master.execute(1, cst.WRITE_MULTIPLE_COILS, 0, output_value=[1, 1]))
 
-        #logger.info(master.execute(1, cst.WRITE_MULTIPLE_REGISTERS, 0, output_value=[1,2]))
+        logger.info(master.execute(1, cst.WRITE_MULTIPLE_REGISTERS, 0, output_value=[1,2]))
 
 
         #send some queries
