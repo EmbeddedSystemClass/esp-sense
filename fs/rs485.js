@@ -106,8 +106,40 @@ let RS485 = {
     this.modbusRequestFrame = modbusRequestFrame;
   },
 
+  init: function(serialPortConfig) {
+    this.readState = MODBUS_STATE_READ_DEVICE_ID;
+    this.modbusRequestFrame  = {
+              id: -1,
+              func: 0,
+              address: 0,
+              length: 0,
+              data: '',
+              byteCount: 0,
+              crc: 0,
+              receiveBuffer: ''
+            };
 
-  init: function() {
+    this.devices = [];
+    
+    this.serialPortConfig = serialPortConfig;
+    RS485.setConfig(serialPortConfig.uartNo, serialPortConfig.config);
+   GPIO.set_mode(serialPortConfig.controlPin, GPIO.MODE_OUTPUT);
+   //let that = this;
+   RS485.setDispatcher(serialPortConfig.uartNo, function(uartNo, that) {
+      let ra = RS485.readAvail(uartNo);
+      
+      if (ra > 0) {
+        print('available ', ra);
+        let data = RS485.read(uartNo);
+       
+      }
+    }, this);
+    
+  // Enable Rx
+  RS485.setRxEnabled(serialPortConfig.uartNo, true);
+},
+
+  init2: function() {
     this.readState = MODBUS_STATE_READ_DEVICE_ID;
     this.modbusRequestFrame  = {
               id: -1,
