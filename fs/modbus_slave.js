@@ -87,7 +87,9 @@ let ModbusSlave = {
             }
         }
 
-        if (requestFrame.length % 8 > 0) {
+        if ( (requestFrame.length > 0  && 
+              requestFrame.length % 8 === 0) ||
+              requestFrame.length % 8 > 0) {
             this.responseView.setUint8(3 + offset, bitMerge);
                 this.responseLength += 1;
                 bitMerge = 0;
@@ -133,7 +135,9 @@ let ModbusSlave = {
             }
         }
 
-        if (requestFrame.length % 8 > 0) {
+        if ((requestFrame.length > 0  && 
+            requestFrame.length % 8 === 0) ||
+            requestFrame.length % 8 > 0) {
             this.responseView.setUint8(3 + offset, bitMerge);
                 this.responseLength += 1;
                 bitMerge = 0;
@@ -145,13 +149,12 @@ let ModbusSlave = {
     readHoldingRegisters: function(requestFrame) {
         print("readHoldingRegisters ");
 
-         
         this.responseView.setUint8(2, requestFrame.length * 2); // byte count
         this.responseLength += 1;
+ 
 
         print("total quantity ", requestFrame.length);
-         
-        //TODO: dynamic, based on requested quantity
+          
         for (let i = 0; i < requestFrame.length; i++) {
             print("reading register i ", i);
             this.responseView.setUint16(3 + (i * 2), this.holdingRegisters.getInt16(requestFrame.address + (i * 2)));

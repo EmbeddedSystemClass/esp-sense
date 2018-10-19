@@ -265,6 +265,10 @@ let RS485 = {
 
     this._wr(this.uartNo, data, length);
 
+    print("total size to write ", length);
+    print("total size written ", l);
+    print("this uart no ", this.uartNo);
+
     this.flush(this.uartNo);
     GPIO.write(this.controlPin, 0);
   },
