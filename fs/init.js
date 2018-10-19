@@ -3,8 +3,33 @@ load('api_timer.js');
 load('api_uart.js');
 load('api_sys.js');
 load('api_gpio.js');
+load('api_config.js');
+load('api_file.js');
 load("rs485.js");
 load("modbus_slave.js");
+
+print("welcome ESP32");
+
+Cfg.set({debug: {level: 3}});
+
+let rs485Config = {
+  baudRate: 9600,
+  parity: 0,
+  numStopBits: 1
+};
+
+File.write(JSON.stringify(rs485Config), "rs485.json");
+
+ 
+let rs485Text = File.read("rs485.json");
+
+let rs485 = JSON.parse(rs485Text);
+
+print("Baud is ", rs485.baudRate);
+
+print("parity is ", rs485.parity);
+
+print("numStopBits is ", rs485.numStopBits);
 
 let slave1 = Object.create(ModbusSlave);
 slave1.deviceId = 1;
@@ -68,7 +93,9 @@ let serialPortConfig = {
   uartNo: 2,
   controlPin: 23,
   config: {
-        baudRate: 9600,
+        baudRate: rs485.baudRate,
+        parity: rs485.parity,
+        numStopBits: rs485.numStopBits,
         esp32: {
           gpio: {
             rx: 16,

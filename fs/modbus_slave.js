@@ -192,6 +192,16 @@ let ModbusSlave = {
 
         this.responseView.setUint16(2, requestFrame.address); // output address
         this.responseLength += 2;
+
+        // Write to memory setUint8
+         let value = requestFrame.dataView.getUint8();
+         print("Value is ", value);
+        // if (value === 0) { // off
+        //     this.inputRegisters.dataView.setUint8(requestFrame.address,0);
+        // } else {
+        //     this.inputRegisters.dataView.setUint8(requestFrame.address,1);
+        // }
+        
         this.responseView.setUint16(4, 0xffff); // output value
         this.responseLength += 2;
     },

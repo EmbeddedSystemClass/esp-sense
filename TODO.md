@@ -1,6 +1,17 @@
-1. Complete Function codes [Read/Write]
+1. Complete Function codes [Write is not yet]
 2. Configurable baudrate, parity and stop bits
 3. Python client works
+
+Device
+    Temp device
+
+    Tag - Name
+    Device ID-
+    temp
+    humidity
+    unit (cel/farenheit)
+    ...
+
 
 
 1. Baud Rate to be configurable

@@ -103,6 +103,12 @@ let RS485 = {
  
   init: function(serialPortConfig) {
     this.readState = MODBUS_STATE_READ_DEVICE_ID;
+
+    let buffer = RS485.calloc(255, 1);
+
+    let dataView = DataView.create(buffer, 0, 255);
+
+
     this.modbusRequestFrame  = {
               id: -1,
               func: 0,
@@ -111,7 +117,9 @@ let RS485 = {
               data: '',
               byteCount: 0,
               crc: 0,
-              receiveBuffer: ''
+              receiveBuffer: '',
+              buffer: buffer,
+              dataView: dataView
             };
 
     this.devices = [];
@@ -227,6 +235,14 @@ let RS485 = {
         }
 
     this.modbusRequestFrame.data = this.readBytes(length);
+
+    print("data is ",     this.modbusRequestFrame.data);
+
+    for(let i = 0; i < length; i++) {
+     let value = this.modbusRequestFrame.data.at(0);
+     this.modbusRequestFrame.dataView.setUint8(i, value);
+    }
+ 
 
     this.readState = MODBUS_STATE_READ_READ_CRC;
 

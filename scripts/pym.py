@@ -26,7 +26,10 @@ print( connection)
 #Starting add, num of reg to read, slave unit.
 #result= client.read_holding_registers(0x00, 10 ,unit= 0x01)
 
-result= client.read_coils(0x00, 24 ,unit= 0x01)
+
+#client.write_coil(0x00, False, unit= 0x01)
+
+result= client.read_coils(0x00, 1 ,unit= 0x01)
 print(result)
 
 #Closes the underlying socket connection
