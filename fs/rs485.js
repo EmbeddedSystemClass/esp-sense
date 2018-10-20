@@ -6,8 +6,8 @@ let MODBUS_STATE_READ_FUNC=1;
 let MODBUS_STATE_READ_ADDRESS=2;
 let MODBUS_STATE_READ_LENGTH=3;
 let MODBUS_STATE_READ_BYTE_COUNT=4;
-let MODBUS_STATE_READ_READ_DATA=5;
-let MODBUS_STATE_READ_READ_CRC=6;
+let MODBUS_STATE_READ_DATA=5;
+let MODBUS_STATE_READ_CRC=6;
 
 let MODBUS_FUNC_READ_COILS = 0x01;
 let MODBUS_FUNC_READ_DISCRETE_INPUTS = 0x02;
@@ -111,7 +111,6 @@ let RS485 = {
 
     let dataView = DataView.create(buffer, 0, 255);
 
-
     this.requestFrame  = {
               id: -1,
               func: 0,
@@ -205,7 +204,7 @@ let RS485 = {
 
     if (this.requestFrame.func === MODBUS_FUNC_WRITE_SINGLE_COIL ||
         this.requestFrame.func === MODBUS_FUNC_WRITE_SINGLE_REGISTER ) {
-      this.readState = MODBUS_STATE_READ_READ_DATA;
+      this.readState = MODBUS_STATE_READ_DATA;
     }
   }, 
  
@@ -213,7 +212,7 @@ let RS485 = {
   readByteCount: function() {
     this.requestFrame.byteCount = this.readInt8();
     print("*Bytecount=", this.requestFrame.byteCount);
-    this.readState = MODBUS_STATE_READ_READ_DATA;
+    this.readState = MODBUS_STATE_READ_DATA;
   },
 
   readLength: function() {
@@ -224,7 +223,7 @@ let RS485 = {
         this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS) {
         this.readState = MODBUS_STATE_READ_BYTE_COUNT;
     } else {
-      this.readState = MODBUS_STATE_READ_READ_CRC;
+      this.readState = MODBUS_STATE_READ_CRC;
     }
   },
 
@@ -255,7 +254,7 @@ let RS485 = {
     }
  
 
-    this.readState = MODBUS_STATE_READ_READ_CRC;
+    this.readState = MODBUS_STATE_READ_CRC;
 
   },
 
@@ -330,11 +329,11 @@ let RS485 = {
       return this.readByteCount(uartNo);
     }
 
-    if (this.readState === MODBUS_STATE_READ_READ_DATA) {
+    if (this.readState === MODBUS_STATE_READ_DATA) {
       return this.readData(uartNo);
     } 
 
-    if (this.readState === MODBUS_STATE_READ_READ_CRC) {
+    if (this.readState === MODBUS_STATE_READ_CRC) {
       return this.readCrc(uartNo);
     }
    
