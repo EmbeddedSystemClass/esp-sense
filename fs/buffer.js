@@ -17,6 +17,12 @@ let Buffer = {
         getInt16: function(address) {
             return this.dataView.getInt16(address - this.offset, this.le);
         },
+
+        getUint16: function(address) {
+            return this.dataView.getUInt16(address - this.offset, this.le);
+        },
+        
+
         setUint8: function(address, value) {
             return this.dataView.setUint8(address - this.offset, value);
         },

@@ -35,6 +35,7 @@ let ModbusSlave = {
                         print("Set default address ", entry.address);
                         print("Set default value ", entry.value);
                         this.holdingRegisters.setUint16(entry.address, entry.value, false);
+                        print("value from register ", this.holdingRegisters.getInt16(entry.address));
                     }
                 }
             }
