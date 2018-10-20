@@ -18,6 +18,25 @@ let MODBUS_FUNC_WRITE_SINGLE_REGISTER = 0x06;
 let MODBUS_FUNC_WRITE_MULTIPLE_COILS = 0x0f;
 let MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS = 0x10;
 
+
+let MODBUS_COILS = 1;
+let MODBUS_INPUT_COILS = 2;
+let MODBUS_INPUT_REGISTERS = 3;
+let MODBUS_HOLDING_REGISTERS = 4;
+
+let READ = 1;
+let WRITE = 2;
+let READWRITE = 3;
+
+
+let BOOLEAN = 0;
+let BYTE = 1;
+let INT16 = 2;
+let INT32 = 3;
+let FLOAT = 4;
+let DOUBLE = 5;
+let STRING = 6;
+
 let RS485 = {
   _free: ffi('void free(void *)'),
   _cdef: ffi('void *mgos_uart_config_get_default(int)'),
@@ -340,6 +359,4 @@ let RS485 = {
   }
 
 };
-
-// Load arch-specific API
-//load('api_arch_uart.js');
+ 

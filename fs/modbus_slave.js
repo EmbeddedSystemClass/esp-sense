@@ -1,34 +1,3 @@
-let ModbusHelper = {
-    calloc: ffi('void *calloc(int, int)'),
-    crc16: ffi('int crc16(void *, int)'),
- 
-    _dataBuffer: {
-        getInt8: function(address) {
-            return this.dataView.getInt8(address - this.offset);
-        },
-
-        getInt16: function(address) {
-            return this.dataView.getInt16(address - this.offset, this.le);
-        },
-        setUint8: function(address, value) {
-            return this.dataView.setUint8(address - this.offset, value);
-        },
-        setUint16: function(address, value, le) {
-            return this.dataView.setUint16(address - this.offset, value, le);
-        }
-    },
-
-    createBuffer: function(config) {
-        let memory =  Object.create(ModbusHelper._dataBuffer);
-        memory.buffer = RS485.calloc(config.size, 1);
-        memory.dataView = DataView.create(memory.buffer, 0, config.size);
-        memory.size = config.size;
-        memory.offset = config.offset;
-        memory.le = config.le;
-        return memory;
-    }
-};
-
 let ModbusSlave = {
     deviceId: 0,
 
@@ -37,21 +6,39 @@ let ModbusSlave = {
 
         this.responseBuffer = RS485.calloc(255, 1);
         this.responseView = DataView.create(this.responseBuffer, 0, 255);
+
         this.responseLength = 0;
-
-
-        this.coils = ModbusHelper.createBuffer(config.coils);
-
-        this.discreteInputsBuffer = ModbusHelper.createBuffer(config.discreteInputs);
-
-        this.holdingRegisters = ModbusHelper.createBuffer(config.holdingRegisters);
-
-        this.inputRegisters = ModbusHelper.createBuffer(config.inputRegisters);
+ 
+        this.coils = Buffer.create(config.coils);
+        this.discreteInputs = Buffer.create(config.discreteInputs);
+        this.holdingRegisters = Buffer.create(config.holdingRegisters);
+        this.inputRegisters = Buffer.create(config.inputRegisters);
     },
-
 
     setSerial: function(serial) {
         this.serial = serial;
+    },
+
+    setProfile: function(profile) {
+        this.profile = profile;
+    },
+
+    initDefaultValues: function() {
+        print("Initialize default value");
+        if (this.profile) {
+            for (let i = 0; i < this.profile.length; i++) {
+                print("Initialize default value length ", this.profile.length);
+                let entry = this.profile[i];
+                if (entry) {
+                    print("Entry location ", entry.location);
+                    if (entry.location === MODBUS_HOLDING_REGISTERS) {
+                        print("Set default address ", entry.address);
+                        print("Set default value ", entry.value);
+                        this.holdingRegisters.setUint16(entry.address, entry.value, false);
+                    }
+                }
+            }
+        }
     },
 
     read: function() {
@@ -103,12 +90,7 @@ let ModbusSlave = {
         }
 
     },
-
-    respond: function() {
-
-    },
-
-
+ 
     readDiscreteInputs: function(requestFrame) {
         print("readDiscreteInputs ");
  
@@ -129,7 +111,7 @@ let ModbusSlave = {
         let bitMerge = 0;
         let offset = 0;
         for (let i = 0; i < requestFrame.quantity; i++) {
-            let value = this.discreteInputsBuffer.getInt8(requestFrame.address + i);
+            let value = this.discreteInputs.getInt8(requestFrame.address + i);
             bitMerge = bitMerge | (value & 0x01);
             bitMerge = bitMerge << 1;
 
@@ -162,8 +144,12 @@ let ModbusSlave = {
         print("total quantity ", requestFrame.quantity);
           
         for (let i = 0; i < requestFrame.quantity; i++) {
-            print("reading register i ", i);
-            this.responseView.setUint16(3 + (i * 2), this.holdingRegisters.getInt16(requestFrame.address + (i * 2)));
+            let address = requestFrame.address + (i * 2);
+            print("reading address  ", address);
+            let value = this.holdingRegisters.getInt16(address);
+            print("value at  register  ", value);
+            
+            this.responseView.setUint16(3 + (i * 2), value);
             this.responseLength += 2;
         }
         
@@ -203,9 +189,9 @@ let ModbusSlave = {
          let value = requestFrame.dataView.getUint16(0);
          print("Value received is ", value);
         if (value === 0) { // off
-            this.inputRegisters.dataView.setUint8(requestFrame.address,0);
+            this.inputRegisters.setUint8(requestFrame.address,0);
         } else {
-            this.inputRegisters.dataView.setUint8(requestFrame.address,1);
+            this.inputRegisters.setUint8(requestFrame.address,1);
         }
         
         this.responseView.setUint16(4, value); // output value
@@ -220,7 +206,7 @@ let ModbusSlave = {
         let value = requestFrame.dataView.getUint16(0);
          print("Value received is ", value);
         
-         this.inputRegisters.dataView.setUint16(requestFrame.address, value);
+         this.holdingRegisters.setUint16(requestFrame.address, value);
          
         this.responseView.setUint16(4, value); // register value
         this.responseLength += 2;
@@ -237,7 +223,7 @@ let ModbusSlave = {
             print("_setCoils byteValue >> ", byteValue);
             // this.coils.setUint8(address + j, bitValue);
              
-            this.coils.dataView.setUint8(address + j, bitValue);
+            this.coils.setUint8(address + j, bitValue);
         }
     },
 
@@ -281,7 +267,7 @@ let ModbusSlave = {
 
             print("**Address   is ", address);
             
-            this.holdingRegisters.dataView.setUint16(address, value);
+            this.holdingRegisters.setUint16(address, value);
             address =  address + 2;
         }
 
@@ -300,7 +286,6 @@ let ModbusSlave = {
         this.responseView.setUint8(1, requestFrame.func); //fc
 
         this.responseLength = 2;
-
 
         if (requestFrame.func === MODBUS_FUNC_READ_COILS) {
             this.readCoils(requestFrame);

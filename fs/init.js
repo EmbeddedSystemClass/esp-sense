@@ -5,6 +5,7 @@ load('api_sys.js');
 load('api_gpio.js');
 load('api_config.js');
 load('api_file.js');
+load('buffer.js');
 load("rs485.js");
 load("modbus_slave.js");
 
@@ -173,6 +174,44 @@ RS485.addDevice(slave2);
 RS485.addDevice(slave3);
 
 RS485.addDevice(slave4);
+
+
+let energyMeterModbusProfile = [
+  {
+    name: "FWVersion",
+    location: MODBUS_HOLDING_REGISTERS,
+    mode: READ,
+    dataType: INT16,
+    address: 1,
+    value: 11
+  },
+  {
+    name: "HWVersion",
+    location: MODBUS_HOLDING_REGISTERS,
+    mode: READ,
+    dataType: INT16,
+    address: 15,
+    value: 33
+  },
+
+  {
+    name: "SerialNumber", 
+    location: MODBUS_HOLDING_REGISTERS,
+    mode: READ,
+    dataType: INT32,
+    address: 16,
+    value: 500
+  }
+];
+
+slave1.setProfile(energyMeterModbusProfile);
+slave1.initDefaultValues();
+
+slave2.setProfile(energyMeterModbusProfile);
+slave2.initDefaultValues();
+
+slave3.setProfile(energyMeterModbusProfile);
+slave3.initDefaultValues();
 
 
 Timer.set(5000 /* milliseconds */, Timer.REPEAT, function() {
