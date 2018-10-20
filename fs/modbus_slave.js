@@ -9,6 +9,12 @@ let ModbusHelper = {
 
         getInt16: function(address) {
             return this.dataView.getInt16(address - this.offset, this.le);
+        },
+        setUint8: function(address, value) {
+            return this.dataView.setUint8(address - this.offset, value);
+        },
+        setUint16: function(address, value, le) {
+            return this.dataView.setUint16(address - this.offset, value, le);
         }
     },
 
@@ -34,7 +40,7 @@ let ModbusSlave = {
         this.responseLength = 0;
 
 
-        this.coilsBuffer = ModbusHelper.createBuffer(config.coils);
+        this.coils = ModbusHelper.createBuffer(config.coils);
 
         this.discreteInputsBuffer = ModbusHelper.createBuffer(config.discreteInputs);
 
@@ -58,9 +64,9 @@ let ModbusSlave = {
     readCoils: function(requestFrame) {
         print("readCoils ");
        
-        let n = Math.floor(requestFrame.length / 8); 
+        let n = Math.floor(requestFrame.quantity / 8); 
 
-        if (requestFrame.length % 8 > 0) {
+        if (requestFrame.quantity % 8 > 0) {
             n = n +  1;
         }
 
@@ -69,13 +75,13 @@ let ModbusSlave = {
         this.responseView.setUint8(2, n); // byte count
         this.responseLength += 1;
        
-        //this.responseView.setUint8(3, this.coilsBuffer.getInt8(requestFrame.address));
+        //this.responseView.setUint8(3, this.coils.getInt8(requestFrame.address));
         // this.responseLength += 1;
 
         let bitMerge = 0;
         let offset = 0;
-        for (let i = 0; i < requestFrame.length; i++) {
-            let value = this.coilsBuffer.getInt8(requestFrame.address + i);
+        for (let i = 0; i < requestFrame.quantity; i++) {
+            let value = this.coils.getInt8(requestFrame.address + i);
             bitMerge = bitMerge | (value & 0x01);
             bitMerge = bitMerge << 1;
 
@@ -87,9 +93,9 @@ let ModbusSlave = {
             }
         }
 
-        if ( (requestFrame.length > 0  && 
-              requestFrame.length % 8 === 0) ||
-              requestFrame.length % 8 > 0) {
+        if ( (requestFrame.quantity > 0  && 
+              requestFrame.quantity % 8 === 0) ||
+              requestFrame.quantity % 8 > 0) {
             this.responseView.setUint8(3 + offset, bitMerge);
                 this.responseLength += 1;
                 bitMerge = 0;
@@ -106,9 +112,9 @@ let ModbusSlave = {
     readDiscreteInputs: function(requestFrame) {
         print("readDiscreteInputs ");
  
-        let n = Math.floor(requestFrame.length / 8); 
+        let n = Math.floor(requestFrame.quantity / 8); 
 
-        if (requestFrame.length % 8 > 0) {
+        if (requestFrame.quantity % 8 > 0) {
             n = n +  1;
         }
 
@@ -117,12 +123,12 @@ let ModbusSlave = {
         this.responseView.setUint8(2, n); // byte count
         this.responseLength += 1;
        
-        //this.responseView.setUint8(3, this.coilsBuffer.getInt8(requestFrame.address));
+        //this.responseView.setUint8(3, this.coils.getInt8(requestFrame.address));
         // this.responseLength += 1;
 
         let bitMerge = 0;
         let offset = 0;
-        for (let i = 0; i < requestFrame.length; i++) {
+        for (let i = 0; i < requestFrame.quantity; i++) {
             let value = this.discreteInputsBuffer.getInt8(requestFrame.address + i);
             bitMerge = bitMerge | (value & 0x01);
             bitMerge = bitMerge << 1;
@@ -135,9 +141,9 @@ let ModbusSlave = {
             }
         }
 
-        if ((requestFrame.length > 0  && 
-            requestFrame.length % 8 === 0) ||
-            requestFrame.length % 8 > 0) {
+        if ((requestFrame.quantity > 0  && 
+            requestFrame.quantity % 8 === 0) ||
+            requestFrame.quantity % 8 > 0) {
             this.responseView.setUint8(3 + offset, bitMerge);
                 this.responseLength += 1;
                 bitMerge = 0;
@@ -149,13 +155,13 @@ let ModbusSlave = {
     readHoldingRegisters: function(requestFrame) {
         print("readHoldingRegisters ");
 
-        this.responseView.setUint8(2, requestFrame.length * 2); // byte count
+        this.responseView.setUint8(2, requestFrame.quantity * 2); // byte count
         this.responseLength += 1;
  
 
-        print("total quantity ", requestFrame.length);
+        print("total quantity ", requestFrame.quantity);
           
-        for (let i = 0; i < requestFrame.length; i++) {
+        for (let i = 0; i < requestFrame.quantity; i++) {
             print("reading register i ", i);
             this.responseView.setUint16(3 + (i * 2), this.holdingRegisters.getInt16(requestFrame.address + (i * 2)));
             this.responseLength += 2;
@@ -167,7 +173,7 @@ let ModbusSlave = {
     readInputRegisters: function(requestFrame) {
         print("readInputRegisters ");
 
-        this.responseView.setUint8(2, requestFrame.length * 2); // byte count
+        this.responseView.setUint8(2, requestFrame.quantity * 2); // byte count
         this.responseLength += 1;
         
         //TODO: dynamic, based on requested quantity
@@ -175,10 +181,10 @@ let ModbusSlave = {
         // this.responseView.setUint16(3, this.inputRegisters.getInt16(requestFrame.address));
         // this.responseLength += 2;
 
-        print("total quantity ", requestFrame.length);
+        print("total quantity ", requestFrame.quantity);
          
         //TODO: dynamic, based on requested quantity
-        for (let i = 0; i < requestFrame.length; i++) {
+        for (let i = 0; i < requestFrame.quantity; i++) {
             print("reading input register i ", i);
             this.responseView.setUint16(3 + (i * 2), this.inputRegisters.getInt16(requestFrame.address + (i * 2)));
             this.responseLength += 2;
@@ -220,23 +226,69 @@ let ModbusSlave = {
         this.responseLength += 2;
     },
 
+    _setCoils: function(address, byteValue, quantity) {
+        for (let j = 0; j < quantity; j++) {
+            let bitValue = (byteValue & 0x01);
+            print("_setCoils address ", address + j);
+            print("_setCoils bitValue ", bitValue);
+            print("_setCoils byteValue ", byteValue);
+            byteValue = byteValue >> 1;
+
+            print("_setCoils byteValue >> ", byteValue);
+            // this.coils.setUint8(address + j, bitValue);
+             
+            this.coils.dataView.setUint8(address + j, bitValue);
+        }
+    },
+
     writeMultipleCoils: function(requestFrame) {
         print("writeMultipleCoils ");
 
         this.responseView.setUint16(2, requestFrame.address); // output address
         this.responseLength += 2;
+
+        let address = requestFrame.address;
         
-        this.responseView.setUint16(4, requestFrame.length); // quantity
+        for (let i = 0; i < requestFrame.byteCount; i++) {
+            let value = requestFrame.dataView.getUint8(i);
+            print("**Value received is ", value);
+
+            let bitsCount = 8;
+
+            // check if last byte, then may have less coils/bit
+            if (i === requestFrame.byteCount - 1) {
+                bitsCount = requestFrame.quantity % 8;
+            }
+
+            address =  address + i * 8;
+
+            this._setCoils(address, value, bitsCount);
+           }
+
+        this.responseView.setUint16(4, requestFrame.quantity); // quantity
         this.responseLength += 2;
     },
 
     writeMultipleRegisters: function(requestFrame) {
         print("writeMultipleRegisters ");
         
+        let address = requestFrame.address;
+        
+        for (let i = 0; i < requestFrame.quantity; i++) {
+            let value = requestFrame.dataView.getUint16(i * 2);
+            
+            print("**Value received is ", value);
+
+            print("**Address   is ", address);
+            
+            this.holdingRegisters.dataView.setUint16(address, value);
+            address =  address + 2;
+        }
+
         this.responseView.setUint16(2, requestFrame.address); // output address
         this.responseLength += 2;
 
-        this.responseView.setUint16(4, requestFrame.length); // quantity
+        this.responseView.setUint16(4, requestFrame.quantity); // quantity
         this.responseLength += 2;
     },
 

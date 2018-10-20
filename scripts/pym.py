@@ -27,10 +27,15 @@ print( connection)
 #result= client.read_holding_registers(0x00, 10 ,unit= 0x01)
 
 
-client.write_coil(0x00, True, unit= 0x01)
+#client.write_coil(0x00, True, unit= 0x01)
 
-#result= client.read_coils(0x00, 1 ,unit= 0x01)
+#client.write_coils(0x00, [True, False, True, True, False], unit= 0x01)
+
+#result= client.read_coils(0x00, 5 ,unit= 0x01)
 #print(result)
+
+client.write_registers(0x00, [1,2,3,4,5,6], unit= 0x01)
+
 
 #Closes the underlying socket connection
 client.close()

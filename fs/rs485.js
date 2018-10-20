@@ -93,6 +93,9 @@ let RS485 = {
 
     this.uartNo = uartNo;
 
+    //FIXME: Can we allocate memory without using hardcode string?
+    this.buf = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'; // Should be > 5
+
     return res;
   },
 
@@ -109,7 +112,7 @@ let RS485 = {
     let dataView = DataView.create(buffer, 0, 255);
 
 
-    this.modbusRequestFrame  = {
+    this.requestFrame  = {
               id: -1,
               func: 0,
               address: 0,
@@ -149,24 +152,25 @@ let RS485 = {
   },
 
   readBytes: function(bytes) {
-    let n = 0; let res = ''; let buf = 'xxxxxxxxxx'; // Should be > 5
-    n = this._rd(this.uartNo, buf, bytes);
+    let n = 0; let res = ''; 
+    //let buf = 'xxxxxxxxxxxxxxxxxxxx'; // Should be > 5
+    n = this._rd(this.uartNo, this.buf, bytes);
     if (n > 0) {
-      res += buf.slice(0, n);
+      res += this.buf.slice(0, n);
     }
     print("Read  ", res);
     return res;
   },
 
   readID: function() {
-    this.modbusRequestFrame.id = this.readInt8();;
-    print("ID is ", this.modbusRequestFrame.id);
+    this.requestFrame.id = this.readInt8();;
+    print("*ID=", this.requestFrame.id);
     this.readState = MODBUS_STATE_READ_FUNC;
   },
    
   readFunc: function() {
-    this.modbusRequestFrame.func = this.readInt8();
-    print("Func is ", this.modbusRequestFrame.func);
+    this.requestFrame.func = this.readInt8();
+    print("*Func=", this.requestFrame.func);
     this.readState = MODBUS_STATE_READ_ADDRESS;
   },
  
@@ -187,61 +191,67 @@ let RS485 = {
   }, 
 
   readAddress: function() {
-    this.modbusRequestFrame.address = this.readInt16();
-    print("Address is ", this.modbusRequestFrame.address);
+    this.requestFrame.address = this.readInt16();
+    print("*Address=", this.requestFrame.address);
 
-    if (this.modbusRequestFrame.func === MODBUS_FUNC_READ_COILS ||
-      this.modbusRequestFrame.func === MODBUS_FUNC_READ_DISCRETE_INPUTS ||
-      this.modbusRequestFrame.func === MODBUS_FUNC_READ_HOLDING_REGISTERS ||
-      this.modbusRequestFrame.func === MODBUS_FUNC_READ_INPUT_REGISTERS || 
-      this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_COILS || 
-      this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS) {
+    if (this.requestFrame.func === MODBUS_FUNC_READ_COILS ||
+      this.requestFrame.func === MODBUS_FUNC_READ_DISCRETE_INPUTS ||
+      this.requestFrame.func === MODBUS_FUNC_READ_HOLDING_REGISTERS ||
+      this.requestFrame.func === MODBUS_FUNC_READ_INPUT_REGISTERS || 
+      this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_COILS || 
+      this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS) {
         this.readState = MODBUS_STATE_READ_LENGTH;
       }
 
-    if (this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_SINGLE_COIL ||
-        this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_SINGLE_REGISTER ) {
+    if (this.requestFrame.func === MODBUS_FUNC_WRITE_SINGLE_COIL ||
+        this.requestFrame.func === MODBUS_FUNC_WRITE_SINGLE_REGISTER ) {
       this.readState = MODBUS_STATE_READ_READ_DATA;
     }
   }, 
  
 
   readByteCount: function() {
-    this.modbusRequestFrame.byteCount = this.readInt8();
-    print("bytecount is is ", this.modbusRequestFrame.byteCount);
+    this.requestFrame.byteCount = this.readInt8();
+    print("*Bytecount=", this.requestFrame.byteCount);
     this.readState = MODBUS_STATE_READ_READ_DATA;
   },
 
   readLength: function() {
-    this.modbusRequestFrame.length = this.readInt16();
-    print("len is ", this.modbusRequestFrame.length);
-    this.readState = MODBUS_STATE_READ_READ_CRC;
+    this.requestFrame.quantity = this.readInt16();
+    print("*Quantity=", this.requestFrame.quantity);
+
+    if (this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_COILS || 
+        this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS) {
+        this.readState = MODBUS_STATE_READ_BYTE_COUNT;
+    } else {
+      this.readState = MODBUS_STATE_READ_READ_CRC;
+    }
   },
 
   readData: function() {
     let length = 0;
 
-    if (this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_COILS) {
-      length = this.modbusRequestFrame.byteCount;
+    if (this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_COILS) {
+      length = this.requestFrame.byteCount;
     }
 
-    if (this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS) {
-      length = this.modbusRequestFrame.byteCount;
+    if (this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS) {
+      length = this.requestFrame.byteCount;
     }
 
-    if (this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_SINGLE_COIL ||
-        this.modbusRequestFrame.func === MODBUS_FUNC_WRITE_SINGLE_REGISTER ) {
+    if (this.requestFrame.func === MODBUS_FUNC_WRITE_SINGLE_COIL ||
+        this.requestFrame.func === MODBUS_FUNC_WRITE_SINGLE_REGISTER ) {
           length = 2;
         }
 
-    this.modbusRequestFrame.data = this.readBytes(length);
+    this.requestFrame.data = this.readBytes(length);
 
-    print("data is ",     this.modbusRequestFrame.data);
+    print("*Data=",     this.requestFrame.data);
 
     for(let i = 0; i < length; i++) {
-     let value = this.modbusRequestFrame.data.at(i);
+     let value = this.requestFrame.data.at(i);
      print('coping value ', value);
-     this.modbusRequestFrame.dataView.setUint8(i, value);
+     this.requestFrame.dataView.setUint8(i, value);
     }
  
 
@@ -250,8 +260,8 @@ let RS485 = {
   },
 
   readCrc: function () {
-    this.modbusRequestFrame.crc = this.readInt16();
-    print("crc is ", this.modbusRequestFrame.crc);
+    this.requestFrame.crc = this.readInt16();
+    print("*CRC=", this.requestFrame.crc);
     this.readState = MODBUS_STATE_READ_DEVICE_ID;
     this.checkCrc();
   },
@@ -266,8 +276,8 @@ let RS485 = {
 
     for (let i in this.devices) {
       let device = this.devices[i];
-      if (device.deviceId === this.modbusRequestFrame.id) {
-        device.processRequest(this.modbusRequestFrame);
+      if (device.deviceId === this.requestFrame.id) {
+        device.processRequest(this.requestFrame);
       }
     }
      
@@ -284,7 +294,6 @@ let RS485 = {
     print("total size to available ", this.writeAvail(200));
 
     let l = this._wr(this.uartNo, data, length);
-
 
     print("total size to write ", length);
     print("total size written ", l);
@@ -315,6 +324,10 @@ let RS485 = {
 
     if (this.readState === MODBUS_STATE_READ_LENGTH) {
       return this.readLength(uartNo);
+    }
+
+    if (this.readState === MODBUS_STATE_READ_BYTE_COUNT) {
+      return this.readByteCount(uartNo);
     }
 
     if (this.readState === MODBUS_STATE_READ_READ_DATA) {
