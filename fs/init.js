@@ -87,6 +87,64 @@ let slave2 = Object.create(ModbusSlave);
 slave2.deviceId = 2;
 
 slave2.init(config2);
+
+
+let config3 = {
+  deviceId: 3,
+  coils: {
+    offset: 0,
+    size: 100
+  },
+  discreteInputs: {
+    offset: 0,
+    size: 100,
+    le: false
+  },
+  holdingRegisters: {
+    offset: 0,
+    size: 100,
+    le: false
+  },
+  inputRegisters: {
+    offset: 0,
+    size: 100,
+    le: false
+  }
+};
+
+
+let slave3 = Object.create(ModbusSlave);
+slave3.init(config3);
+
+
+
+
+let config4 = {
+  deviceId: 4,
+  coils: {
+    offset: 0,
+    size: 100
+  },
+  discreteInputs: {
+    offset: 0,
+    size: 100,
+    le: false
+  },
+  holdingRegisters: {
+    offset: 0,
+    size: 100,
+    le: false
+  },
+  inputRegisters: {
+    offset: 0,
+    size: 100,
+    le: false
+  }
+};
+
+
+let slave4 = Object.create(ModbusSlave);
+slave4.init(config4);
   
 
 let serialPortConfig = {
@@ -111,3 +169,12 @@ RS485.init(serialPortConfig);
 
 RS485.addDevice(slave1);
 RS485.addDevice(slave2);
+
+RS485.addDevice(slave3);
+
+RS485.addDevice(slave4);
+
+
+Timer.set(5000 /* milliseconds */, Timer.REPEAT, function() {
+   print(' RAM: ' + JSON.stringify(Sys.free_ram()));
+}, null);

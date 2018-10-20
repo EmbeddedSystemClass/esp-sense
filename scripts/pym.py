@@ -1,5 +1,6 @@
 import pymodbus
 import serial
+import time
 from pymodbus.pdu import ModbusRequest
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient #initialize a serial RTU client instance
 from pymodbus.transaction import ModbusRtuFramer
@@ -35,6 +36,11 @@ print( connection)
 #print(result)
 
 client.write_registers(0x00, [1,2,3,4,5,6], unit= 0x01)
+
+for x in range(0, 30):
+    print ("We're on time %d" % (x))
+    client.write_registers(0x00, [1,2,3,4,5,6], unit= 0x01)
+    time.sleep(1)
 
 
 #Closes the underlying socket connection

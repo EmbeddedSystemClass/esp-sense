@@ -55,10 +55,8 @@ let RS485 = {
   // Flush the UART output buffer, wait for the data to be sent.
   flush: ffi('void mgos_uart_flush(int)'),
 
- 
   calloc: ffi('void *calloc(int, int)'),
   crc16: ffi('int crc16(void *, int)'),
-
  
   setConfig: function(uartNo, param) {
     let cfg = this._cdef(uartNo);
