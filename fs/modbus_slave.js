@@ -194,15 +194,15 @@ let ModbusSlave = {
         this.responseLength += 2;
 
         // Write to memory setUint8
-         let value = requestFrame.dataView.getUint8();
-         print("Value is ", value);
-        // if (value === 0) { // off
-        //     this.inputRegisters.dataView.setUint8(requestFrame.address,0);
-        // } else {
-        //     this.inputRegisters.dataView.setUint8(requestFrame.address,1);
-        // }
+         let value = requestFrame.dataView.getUint16(0);
+         print("Value received is ", value);
+        if (value === 0) { // off
+            this.inputRegisters.dataView.setUint8(requestFrame.address,0);
+        } else {
+            this.inputRegisters.dataView.setUint8(requestFrame.address,1);
+        }
         
-        this.responseView.setUint16(4, 0xffff); // output value
+        this.responseView.setUint16(4, value); // output value
         this.responseLength += 2;
     },
 
@@ -211,7 +211,12 @@ let ModbusSlave = {
 
         this.responseView.setUint16(2, requestFrame.address); // output address
         this.responseLength += 2;
-        this.responseView.setUint16(4, 0x0002); // register value
+        let value = requestFrame.dataView.getUint16(0);
+         print("Value received is ", value);
+        
+         this.inputRegisters.dataView.setUint16(requestFrame.address, value);
+         
+        this.responseView.setUint16(4, value); // register value
         this.responseLength += 2;
     },
 
@@ -220,7 +225,7 @@ let ModbusSlave = {
 
         this.responseView.setUint16(2, requestFrame.address); // output address
         this.responseLength += 2;
-
+        
         this.responseView.setUint16(4, requestFrame.length); // quantity
         this.responseLength += 2;
     },

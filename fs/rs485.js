@@ -239,7 +239,8 @@ let RS485 = {
     print("data is ",     this.modbusRequestFrame.data);
 
     for(let i = 0; i < length; i++) {
-     let value = this.modbusRequestFrame.data.at(0);
+     let value = this.modbusRequestFrame.data.at(i);
+     print('coping value ', value);
      this.modbusRequestFrame.dataView.setUint8(i, value);
     }
  

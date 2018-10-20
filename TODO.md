@@ -5,13 +5,20 @@
 Device
     Temp device
 
-    Tag - Name
-    Device ID-
-    temp
-    humidity
-    unit (cel/farenheit)
-    ...
+        Tag - Name
+        Device ID-
+        temp
+        humidity
+        unit (cel/farenheit)
+        ...
 
+    Solor Industries
+        Combiner Box
+        Inverters
+        Transformer
+
+    MQTT -- Remote
+    Scala/Java - Local to RS485
 
 
 1. Baud Rate to be configurable
