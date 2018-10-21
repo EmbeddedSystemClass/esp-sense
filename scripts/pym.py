@@ -28,6 +28,12 @@ print( connection)
 result= client.read_holding_registers(0x00, 5 ,unit= 0x01)
 print(result)
 
+
+#Starting add, num of reg to read, slave unit.
+result= client.read_holding_registers(28, 5 ,unit= 0x01)
+print(result)
+
+
 # rr = client.read_discrete_inputs(0, 8, unit=0x01)
 # print(rr)
 

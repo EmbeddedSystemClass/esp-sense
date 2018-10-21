@@ -201,7 +201,26 @@ let energyMeterModbusProfile = [
     dataType: INT32,
     address: 16,
     value: 500
+  },
+
+  {
+    name: "WT1", 
+    location: MODBUS_HOLDING_REGISTERS,
+    mode: READ,
+    dataType: INT32,
+    address: 28,
+    value: 1020
+  },
+
+  {
+    name: "WT1_PARTIAL", 
+    location: MODBUS_HOLDING_REGISTERS,
+    mode: READWRITE,
+    dataType: INT32,
+    address: 30,
+    value: 2000
   }
+  
 ];
 
 slave1.setProfile(energyMeterModbusProfile);
