@@ -170,9 +170,7 @@ RS485.init(serialPortConfig);
 
 RS485.addDevice(slave1);
 RS485.addDevice(slave2);
-
 RS485.addDevice(slave3);
-
 RS485.addDevice(slave4);
 
 

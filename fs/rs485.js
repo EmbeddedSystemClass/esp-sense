@@ -247,14 +247,11 @@ let RS485 = {
   readData: function() {
     let length = 0;
 
-    if (this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_COILS) {
+    if (this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_COILS || 
+        this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS) {
       length = this.requestFrame.byteCount;
     }
-
-    if (this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS) {
-      length = this.requestFrame.byteCount;
-    }
-
+ 
     if (this.requestFrame.func === MODBUS_FUNC_WRITE_SINGLE_COIL ||
         this.requestFrame.func === MODBUS_FUNC_WRITE_SINGLE_REGISTER ) {
           length = 2;
@@ -283,7 +280,9 @@ let RS485 = {
   },
 
   checkCrc: function () {
+    //TODO: check CRC valid or not
     print("checking crc ..");
+    //FIXME: If CRC valid, call this
     this.processRequest();
   },
 
@@ -304,7 +303,7 @@ let RS485 = {
   },
 
   write: function(data, length) {
-    GPIO.write(this.controlPin, 1);
+    GPIO.write(this.controlPin, 1); // HIGH, RTS
 
 
     print("total size to available ", this.writeAvail(200));
@@ -319,7 +318,7 @@ let RS485 = {
 
 
     this.flush(this.uartNo);
-    GPIO.write(this.controlPin, 0);
+    GPIO.write(this.controlPin, 0); // LOW, CTS - CLEAR TO SEND
   },
 
   read: function(uartNo) {
