@@ -1,4 +1,4 @@
-let EnergyMeter = {
+let TemperatureMeter = {
     config: {
         coils: {
           offset: 0,
@@ -23,7 +23,7 @@ let EnergyMeter = {
 
     profile: [
       {
-        name: "FWVersion",
+        name: "TemperatureC",
         location: MODBUS_HOLDING_REGISTERS,
         mode: READ,
         dataType: INT16,
@@ -31,67 +31,63 @@ let EnergyMeter = {
         value: 11
       },
       {
-        name: "HWVersion",
+        name: "TemperatureF",
         location: MODBUS_HOLDING_REGISTERS,
         mode: READ,
         dataType: INT16,
-        address: 15,
+        address: 4,
         value: 33
       },
     
       {
-        name: "SerialNumber", 
+        name: "RelHumidity", 
+        location: MODBUS_HOLDING_REGISTERS,
+        mode: READ,
+        dataType: INT32,
+        address: 8,
+        value: 20
+      },
+      {
+        name: "AbsHumidity", 
+        location: MODBUS_HOLDING_REGISTERS,
+        mode: READ,
+        dataType: INT32,
+        address: 12,
+        value: 22
+      },
+      {
+        name: "DewPointC", 
         location: MODBUS_HOLDING_REGISTERS,
         mode: READ,
         dataType: INT32,
         address: 16,
-        value: 500
+        value: 28
       },
-    
       {
-        name: "WT1", 
+        name: "DewPointF", 
+        location: MODBUS_HOLDING_REGISTERS,
+        mode: READ,
+        dataType: INT32,
+        address: 20,
+        value: 32
+      },
+      {
+        name: "MixingRation", 
+        location: MODBUS_HOLDING_REGISTERS,
+        mode: READ,
+        dataType: INT32,
+        address: 24,
+        value: 15
+      }
+      ,
+      {
+        name: "AirPressure", 
         location: MODBUS_HOLDING_REGISTERS,
         mode: READ,
         dataType: INT32,
         address: 28,
-        value: 1020
-      },
-    
-      {
-        name: "WT1_PARTIAL", 
-        location: MODBUS_HOLDING_REGISTERS,
-        mode: READWRITE,
-        dataType: INT32,
-        address: 30,
-        value: 2000
-      },
-      {
-        name: "URMS_PH1", 
-        location: MODBUS_HOLDING_REGISTERS,
-        mode: READWRITE,
-        dataType: INT16,
-        address: 36,
-        value: 230 //volt
-      },
-      
-      {
-        name: "IRMS_PH1", 
-        location: MODBUS_HOLDING_REGISTERS,
-        mode: READWRITE,
-        dataType: INT16,
-        address: 37,
-        value: 5 //amp
-      },
-
-      {
-        name: "PRMS_PH1", 
-        location: MODBUS_HOLDING_REGISTERS,
-        mode: READWRITE,
-        dataType: INT16,
-        address: 38,
-        value: 50 //amp * voltage / 1000 to get KW
+        value: 22
       }
-      
     ],
 
     _Meter: {
@@ -101,22 +97,18 @@ let EnergyMeter = {
         this.slave.deviceId = deviceId;
 
         this.slave.init(config);
-        this.slave.setProfile(EnergyMeter.profile);
+        this.slave.setProfile(TemperatureMeter.profile);
         this.slave.initDefaultValues();
 
         Timer.set(5000 /* milliseconds */, Timer.REPEAT, function(that) {
           
-          let voltage = 220 + Math.floor(Math.random() * 10);
-          let amp = 5 + Math.floor(Math.random() * 10);
-          let current = voltage * amp;
+          let temp = 30 + Math.floor(Math.random() * 10);
+           
 
-          print(' Energy Meter : ', + that.slave.deviceId,voltage,amp,   current);
+          print(' Temp Meter : ', + that.slave.deviceId,temp);
 
-          that.slave.setHoldingRegister(36, voltage);
-          
-          that.slave.setHoldingRegister(37, amp);
-          
-          that.slave.setHoldingRegister(38, current);
+          that.slave.setHoldingRegister(1, temp);
+           
 
         }, this);
 
@@ -125,8 +117,8 @@ let EnergyMeter = {
     },
 
     create: function(deviceId) {
-      let energyDevice =  Object.create(EnergyMeter._Meter); 
-      energyDevice.init(deviceId, EnergyMeter.config);
-      return energyDevice;
+      let device =  Object.create(TemperatureMeter._Meter); 
+      device.init(deviceId, TemperatureMeter.config);
+      return device;
     }
 };

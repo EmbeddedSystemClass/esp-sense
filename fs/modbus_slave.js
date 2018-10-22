@@ -2,7 +2,7 @@ let ModbusSlave = {
     deviceId: 0,
 
     init: function(config) {
-        this.deviceId = config.deviceId;
+        //this.deviceId = config.deviceId;
 
         this.responseBuffer = RS485.calloc(255, 1);
         this.responseView = DataView.create(this.responseBuffer, 0, 255);
@@ -40,6 +40,11 @@ let ModbusSlave = {
                 }
             }
         }
+    },
+
+
+    setHoldingRegister: function(address, value) {
+        this.holdingRegisters.setUint16(address, value, false);
     },
 
     read: function() {

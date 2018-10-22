@@ -8,7 +8,9 @@ load('api_file.js');
 load('buffer.js');
 load("rs485.js");
 load("modbus_slave.js");
+load("energy_meter.js");
 
+load("temperature_meter.js");
 print("welcome ESP32");
 
 Cfg.set({debug: {level: 3}});
@@ -31,122 +33,7 @@ print("Baud is ", rs485.baudRate);
 print("parity is ", rs485.parity);
 
 print("numStopBits is ", rs485.numStopBits);
-
-let slave1 = Object.create(ModbusSlave);
-slave1.deviceId = 1;
-
-let config1 = {
-  deviceId: 1,
-  coils: {
-    offset: 0,
-    size: 100
-  },
-  discreteInputs: {
-    offset: 0,
-    size: 100,
-    le: false
-  },
-  holdingRegisters: {
-    offset: 0,
-    size: 100,
-    le: false
-  },
-  inputRegisters: {
-    offset: 0,
-    size: 100,
-    le: false
-  }
-};
-
-slave1.init(config1);
-
-let config2 = {
-  deviceId: 2,
-  coils: {
-    offset: 0,
-    size: 100,
-    le: false
-  },
-  discreteInputs: {
-    offset: 0,
-    size: 100,
-    le: false
-  },
-  holdingRegisters: {
-    offset: 0,
-    size: 100,
-    le: false
-  },
-  inputRegisters: {
-    offset: 0,
-    size: 100,
-    le: false
-  }
-};
-
-let slave2 = Object.create(ModbusSlave);
-slave2.deviceId = 2;
-
-slave2.init(config2);
-
-
-let config3 = {
-  deviceId: 3,
-  coils: {
-    offset: 0,
-    size: 100
-  },
-  discreteInputs: {
-    offset: 0,
-    size: 100,
-    le: false
-  },
-  holdingRegisters: {
-    offset: 0,
-    size: 100,
-    le: false
-  },
-  inputRegisters: {
-    offset: 0,
-    size: 100,
-    le: false
-  }
-};
-
-
-let slave3 = Object.create(ModbusSlave);
-slave3.init(config3);
-
-
-
-
-let config4 = {
-  deviceId: 4,
-  coils: {
-    offset: 0,
-    size: 100
-  },
-  discreteInputs: {
-    offset: 0,
-    size: 100,
-    le: false
-  },
-  holdingRegisters: {
-    offset: 0,
-    size: 100,
-    le: false
-  },
-  inputRegisters: {
-    offset: 0,
-    size: 100,
-    le: false
-  }
-};
-
-
-let slave4 = Object.create(ModbusSlave);
-slave4.init(config4);
-  
+ 
 
 let serialPortConfig = {
   uartNo: 2,
@@ -168,10 +55,33 @@ RS485.setFlowControl(23);
 
 RS485.init(serialPortConfig);
 
-RS485.addDevice(slave1);
-RS485.addDevice(slave2);
-RS485.addDevice(slave3);
-RS485.addDevice(slave4);
+
+let energyMeter1 = EnergyMeter.create(1);
+// let energyMeter2 = EnergyMeter.create(2);
+// let energyMeter3 = EnergyMeter.create(3);
+// let energyMeter4 = EnergyMeter.create(4);
+
+
+RS485.addDevice(energyMeter1.slave);
+// RS485.addDevice(energyMeter2.slave);
+// RS485.addDevice(energyMeter3.slave);
+// RS485.addDevice(energyMeter4.slave);
+
+// let ENERGY_METERS_COUNT = 5;
+// let TEMPERATURE_METERS_COUNT = 1;
+
+
+// for (let i = 1; i < ENERGY_METERS_COUNT + 1; i++) {
+//   let energyMeter = EnergyMeter.create(i);
+//   RS485.addDevice(energyMeter.slave);
+// }
+
+// for (let i = 10; i < 10 + TEMPERATURE_METERS_COUNT; i++) {
+//   let meter = TemperatureMeter.create(i);
+//   RS485.addDevice(meter.slave);
+// }
+
+
 
 
 let energyMeterModbusProfile = [
@@ -221,6 +131,7 @@ let energyMeterModbusProfile = [
   
 ];
 
+/*
 slave1.setProfile(energyMeterModbusProfile);
 slave1.initDefaultValues();
 
@@ -229,7 +140,7 @@ slave2.initDefaultValues();
 
 slave3.setProfile(energyMeterModbusProfile);
 slave3.initDefaultValues();
-
+*/
 
 Timer.set(5000 /* milliseconds */, Timer.REPEAT, function() {
    print(' RAM: ' + JSON.stringify(Sys.free_ram()));
