@@ -22,7 +22,6 @@ let Buffer = {
             return this.dataView.getUInt16(address - this.offset, this.le);
         },
         
-
         setUint8: function(address, value) {
             return this.dataView.setUint8(address - this.offset, value);
         },

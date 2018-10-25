@@ -78,8 +78,7 @@ let TemperatureMeter = {
         dataType: INT32,
         address: 24,
         value: 15
-      }
-      ,
+      },
       {
         name: "AirPressure", 
         location: MODBUS_HOLDING_REGISTERS,

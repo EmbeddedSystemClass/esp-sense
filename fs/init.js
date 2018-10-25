@@ -5,13 +5,24 @@ load('api_sys.js');
 load('api_gpio.js');
 load('api_config.js');
 load('api_file.js');
+load('api_rpc.js');
+load('api_http.js');
+load('api_mqtt.js');
+
 load('buffer.js');
+load('fetch.js');
 load("rs485.js");
+
 load("modbus_slave.js");
 load("energy_meter.js");
 
 load("temperature_meter.js");
 print("welcome ESP32");
+
+RPC.call(RPC.LOCAL, 'Sys.GetInfo', null, function(resp, ud) {
+  //print('Response:', JSON.stringify(resp));
+  print('MAC address:', resp.mac);
+}, null);
 
 Cfg.set({debug: {level: 3}});
 
@@ -53,95 +64,100 @@ let serialPortConfig = {
 
 RS485.setFlowControl(23);
 
-RS485.init(serialPortConfig);
+// RS485.init(serialPortConfig);
 
 
-let energyMeter1 = EnergyMeter.create(1);
-// let energyMeter2 = EnergyMeter.create(2);
-// let energyMeter3 = EnergyMeter.create(3);
-// let energyMeter4 = EnergyMeter.create(4);
+// let energyMeter1 = EnergyMeter.create(1);
+ 
+// RS485.addDevice(energyMeter1.slave);
 
-
-RS485.addDevice(energyMeter1.slave);
-// RS485.addDevice(energyMeter2.slave);
-// RS485.addDevice(energyMeter3.slave);
-// RS485.addDevice(energyMeter4.slave);
-
-// let ENERGY_METERS_COUNT = 5;
-// let TEMPERATURE_METERS_COUNT = 1;
-
-
-// for (let i = 1; i < ENERGY_METERS_COUNT + 1; i++) {
-//   let energyMeter = EnergyMeter.create(i);
-//   RS485.addDevice(energyMeter.slave);
-// }
-
-// for (let i = 10; i < 10 + TEMPERATURE_METERS_COUNT; i++) {
-//   let meter = TemperatureMeter.create(i);
-//   RS485.addDevice(meter.slave);
-// }
-
-
-
-
-let energyMeterModbusProfile = [
-  {
-    name: "FWVersion",
-    location: MODBUS_HOLDING_REGISTERS,
-    mode: READ,
-    dataType: INT16,
-    address: 1,
-    value: 11
-  },
-  {
-    name: "HWVersion",
-    location: MODBUS_HOLDING_REGISTERS,
-    mode: READ,
-    dataType: INT16,
-    address: 15,
-    value: 33
-  },
-
-  {
-    name: "SerialNumber", 
-    location: MODBUS_HOLDING_REGISTERS,
-    mode: READ,
-    dataType: INT32,
-    address: 16,
-    value: 500
-  },
-
-  {
-    name: "WT1", 
-    location: MODBUS_HOLDING_REGISTERS,
-    mode: READ,
-    dataType: INT32,
-    address: 28,
-    value: 1020
-  },
-
-  {
-    name: "WT1_PARTIAL", 
-    location: MODBUS_HOLDING_REGISTERS,
-    mode: READWRITE,
-    dataType: INT32,
-    address: 30,
-    value: 2000
-  }
-  
-];
-
-/*
-slave1.setProfile(energyMeterModbusProfile);
-slave1.initDefaultValues();
-
-slave2.setProfile(energyMeterModbusProfile);
-slave2.initDefaultValues();
-
-slave3.setProfile(energyMeterModbusProfile);
-slave3.initDefaultValues();
-*/
+// let tempMeter1 = TemperatureMeter.create(5);
+// RS485.addDevice(tempMeter1.slave);
+ 
 
 Timer.set(5000 /* milliseconds */, Timer.REPEAT, function() {
    print(' RAM: ' + JSON.stringify(Sys.free_ram()));
+
+  let res = MQTT.pub('presence', JSON.stringify({ ram: Sys.free_ram(), b: 2 }), 0);
+  print('Published:', res ? 'yes' : 'no');
+ 
+
 }, null);
+
+
+function loadProfile(id) {
+  let content = File.read("profile-" + id + ".json");
+  let profile = JSON.parse(content);
+  print("loaded profile ", profile.id);
+}
+
+function loadDevice(id) {
+  let deviceContent = File.read("device-" + id + ".json");
+  let device = JSON.parse(deviceContent);
+  print("loaded device ", device.id);
+  loadProfile(device.id);
+}
+
+function loadEdge() {
+  let edgeContent = File.read("edge.json");
+  let edge = JSON.parse(edgeContent);
+  print("loaded edge ", edge.id);
+  for (let i =0; i < edge.devices.length; i++) {
+    let deviceId = edge.devices[i];
+    print("device id", deviceId);
+    loadDevice(deviceId);
+  }
+}
+ 
+
+Timer.set(10000,Timer.REPEAT,function(){
+  //loadEdge();
+}, null);
+
+Timer.set(10000,Timer.REPEAT,function(){
+  
+  // RPC.call(RPC.LOCAL, 'Sys.GetInfo', null, function(resp, ud) {
+  //   //print('Response:', JSON.stringify(resp));
+  //   print('MAC address:', resp.mac);
+  //   Fetch.fetchEdge(resp.mac);
+  // }, null);
+
+}, null);
+
+let pin = 0;
+
+GPIO.set_button_handler(pin, GPIO.PULL_UP, GPIO.INT_EDGE_NEG, 200, function() {
+  print("Button pressed");
+  RPC.call(RPC.LOCAL, 'Sys.GetInfo', null, function(resp, ud) {
+    //print('Response:', JSON.stringify(resp));
+    print('MAC address:', resp.mac);
+    Fetch.fetchEdge(resp.mac);
+  }, null);
+}, null);
+
+  // HTTP.query({
+  //      url: 'http://192.168.2.6:7777/api/edges/30AEA47564F4',
+  //     // headers: { 'X-Foo': 'bar' },     // Optional - headers
+  //     // data: {foo: 1, bar: 'baz'},      // Optional. If set, JSON-encoded and POST-ed
+  //      success: function(body, full_http_msg) {
+  //        let users = JSON.parse(body);
+  //        File.write(body,"settings.json");
+  //        let settings =File.read("settings.json");
+  //        print(settings);
+  //             },
+  //      error: function(err) { print(err); },  // Optional
+  //    });
+
+
+//    },null);
+
+
+ MQTT.sub('presence', function(conn, topic, msg) {
+    print('Topic:', topic, 'message:', msg);
+  }, null);
+
+  MQTT.setEventHandler(function(conn, ev, edata) {
+    if (ev !== 0) print('MQTT event handler: got', ev);
+    // if (edata !== 0) print('MQTT event handler: got edata', edata);
+    
+  }, null);
