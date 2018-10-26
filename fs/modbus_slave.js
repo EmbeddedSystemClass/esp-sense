@@ -4,8 +4,8 @@ let ModbusSlave = {
     init: function(config) {
         //this.deviceId = config.deviceId;
 
-        this.responseBuffer = RS485.calloc(255, 1);
-        this.responseView = DataView.create(this.responseBuffer, 0, 255);
+        // this.responseBuffer = RS485.calloc(255, 1);
+        // this.responseView = DataView.create(this.responseBuffer, 0, 255);
 
         this.responseLength = 0;
  

@@ -8,6 +8,7 @@ set -x
 # mos put fs/temperature_meter.js
 
 mos put fs/fetch.js
+mos put fs/registry.js
 mos put fs/init.js
 
 mos call Sys.Reboot

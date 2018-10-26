@@ -128,6 +128,10 @@ let RS485 = {
 
     let dataView = DataView.create(buffer, 0, 255);
 
+
+    this.responseBuffer = RS485.calloc(255, 1);
+    this.responseView = DataView.create(this.responseBuffer, 0, 255);
+
     this.requestFrame  = {
               id: -1,
               func: 0,
@@ -164,6 +168,8 @@ let RS485 = {
  
   addDevice: function(device) {
     device.setSerial(this);
+    device.responseBuffer = this.responseBuffer;
+    device.responseView = this.responseView;
     this.devices.push(device);
   },
 
