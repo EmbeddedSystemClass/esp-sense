@@ -80,6 +80,7 @@ let RS485 = {
   setConfig: function(uartNo, param) {
     let cfg = this._cdef(uartNo);
 
+
     this._cbp(cfg, param.baudRate || 115200,
                    param.numDataBits || 8,
                    param.parity || 0,
@@ -122,6 +123,9 @@ let RS485 = {
   },
  
   init: function(serialPortConfig) {
+
+    this.last_receive_time = 0;
+
     this.readState = MODBUS_STATE_READ_DEVICE_ID;
 
     let buffer = RS485.calloc(255, 1);
@@ -155,14 +159,40 @@ let RS485 = {
       let ra = RS485.readAvail(uartNo);
       
       if (ra > 0) {
+        let n = Timer.now() * 1000 * 1000;
+        print("before ", n);
+
+        if ( n > ( that.last_receive_time + (that.timeout  * 15)) ) {
+          that.readState = MODBUS_STATE_READ_DEVICE_ID;
+          print("***RESET State");
+        }
+       
+
         print('available ', ra);
         let data = RS485.read(uartNo);
        
+        that.last_receive_time = Timer.now() * 1000 * 1000;
+        print("after ", that.last_receive_time);
       }
     }, this);
     
   // Enable Rx
   RS485.setRxEnabled(serialPortConfig.uartNo, true);
+
+  this.timeout = 0;
+  this.baudRate = serialPortConfig.config.baudRate;
+
+  if (this.baudRate > 19200) {
+    this.timeout = 1750;
+    }
+    else {
+        this.timeout = 35000000 / this.baudRate; // 1T * 3.5 = T3.5
+    }
+
+
+  print("baud is ", this.baudRate);
+  print("Timeout is ", this.timeout);
+
 },
  
  
@@ -185,6 +215,10 @@ let RS485 = {
   },
 
   readID: function() {
+
+  print("baud is ", this.baudRate);
+  print("Timeout is ", this.timeout);
+
     this.requestFrame.id = this.readInt8();;
     print("*ID=", this.requestFrame.id);
     this.readState = MODBUS_STATE_READ_FUNC;
