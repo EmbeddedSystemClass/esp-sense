@@ -70,6 +70,9 @@ RS485.setFlowControl(23);
 RS485.init(serialPortConfig);
 
 
+Registry.loadEdge();
+
+
 // let energyMeter1 = EnergyMeter.create(1);
  
 // RS485.addDevice(energyMeter1.slave);
