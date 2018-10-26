@@ -1,48 +1,22 @@
 let ModbusSlave = {
     deviceId: 0,
 
-    init: function(config) {
+    init: function(deviceBuffers) {
         //this.deviceId = config.deviceId;
 
-        // this.responseBuffer = RS485.calloc(255, 1);
-        // this.responseView = DataView.create(this.responseBuffer, 0, 255);
+        this.responseBuffer = RS485.calloc(255, 1);
+        this.responseView = DataView.create(this.responseBuffer, 0, 255);
 
         this.responseLength = 0;
+        this.deviceBuffers = deviceBuffers;
+        this.activeDeviceBuffer = null;
  
-        this.coils = Buffer.create(config.coils);
-        this.discreteInputs = Buffer.create(config.discreteInputs);
-        this.holdingRegisters = Buffer.create(config.holdingRegisters);
-        this.inputRegisters = Buffer.create(config.inputRegisters);
+        // this.coils = Buffer.create(config.coils);
+        // this.discreteInputs = Buffer.create(config.discreteInputs);
+        // this.holdingRegisters = Buffer.create(config.holdingRegisters);
+        // this.inputRegisters = Buffer.create(config.inputRegisters);
     },
-
-    setSerial: function(serial) {
-        this.serial = serial;
-    },
-
-    setProfile: function(profile) {
-        this.profile = profile;
-    },
-
-    initDefaultValues: function() {
-        print("Initialize default value");
-        if (this.profile) {
-            for (let i = 0; i < this.profile.length; i++) {
-                print("Initialize default value length ", this.profile.length);
-                let entry = this.profile[i];
-                if (entry) {
-                    print("Entry location ", entry.location);
-                    if (entry.location === MODBUS_HOLDING_REGISTERS) {
-                        print("Set default address ", entry.address);
-                        print("Set default value ", entry.value);
-                        this.holdingRegisters.setUint16(entry.address, entry.value, false);
-                        print("value from register ", this.holdingRegisters.getInt16(entry.address));
-                    }
-                }
-            }
-        }
-    },
-
-
+    
     setHoldingRegister: function(address, value) {
         this.holdingRegisters.setUint16(address, value, false);
     },
@@ -67,14 +41,13 @@ let ModbusSlave = {
         // TODO: dynamic length
         this.responseView.setUint8(2, n); // byte count
         this.responseLength += 1;
-       
-        //this.responseView.setUint8(3, this.coils.getInt8(requestFrame.address));
-        // this.responseLength += 1;
-
+        
         let bitMerge = 0;
         let offset = 0;
         for (let i = 0; i < requestFrame.quantity; i++) {
-            let value = this.coils.getInt8(requestFrame.address + i);
+
+            let value = this.activeDeviceBuffer.getCoil(requestFrame.address + i);
+
             bitMerge = bitMerge | (value & 0x01);
             bitMerge = bitMerge << 1;
 
@@ -110,14 +83,12 @@ let ModbusSlave = {
         // TODO: dynamic length
         this.responseView.setUint8(2, n); // byte count
         this.responseLength += 1;
-       
-        //this.responseView.setUint8(3, this.coils.getInt8(requestFrame.address));
-        // this.responseLength += 1;
+        
 
         let bitMerge = 0;
         let offset = 0;
         for (let i = 0; i < requestFrame.quantity; i++) {
-            let value = this.discreteInputs.getInt8(requestFrame.address + i);
+            let value = this.activeDeviceBuffer.getDiscrete(requestFrame.address + i);
             bitMerge = bitMerge | (value & 0x01);
             bitMerge = bitMerge << 1;
 
@@ -152,7 +123,9 @@ let ModbusSlave = {
         for (let i = 0; i < requestFrame.quantity; i++) {
             let address = requestFrame.address + (i * 2);
             print("reading address  ", address);
-            let value = this.holdingRegisters.getInt16(address);
+
+            let value = this.activeDeviceBuffer.getHoldingRegisterUint16(address);
+
             print("value at  register  ", value);
             
             this.responseView.setUint16(3 + (i * 2), value);
@@ -169,16 +142,15 @@ let ModbusSlave = {
         this.responseLength += 1;
         
         //TODO: dynamic, based on requested quantity
-
-        // this.responseView.setUint16(3, this.inputRegisters.getInt16(requestFrame.address));
-        // this.responseLength += 2;
+ 
 
         print("total quantity ", requestFrame.quantity);
          
         //TODO: dynamic, based on requested quantity
         for (let i = 0; i < requestFrame.quantity; i++) {
             print("reading input register i ", i);
-            this.responseView.setUint16(3 + (i * 2), this.inputRegisters.getInt16(requestFrame.address + (i * 2)));
+            let value = this.activeDeviceBuffer.getInputRegisterUint16(requestFrame.address + (i * 2));
+            this.responseView.setUint16(3 + (i * 2), value);
             this.responseLength += 2;
         }
  
@@ -188,6 +160,7 @@ let ModbusSlave = {
     writeSingleCoil: function(requestFrame) {
         print("writeSingleCoil ");
 
+        
         this.responseView.setUint16(2, requestFrame.address); // output address
         this.responseLength += 2;
 
@@ -286,7 +259,23 @@ let ModbusSlave = {
 
 
     processRequest: function(requestFrame) {
-        print('Device Process Request', this.deviceId);
+        print('Device Process Request', requestFrame.id);
+
+        this.activeDeviceBuffer = null;
+        for (let i = 0; i < this.deviceBuffers.length; i++) {
+            if (this.deviceBuffers[i].deviceId === requestFrame.id) {
+                this.activeDeviceBuffer = this.deviceBuffers[i];
+                break;
+            }
+        }
+
+        if (!this.activeDeviceBuffer || this.activeDeviceBuffer === null) {
+            print("Skipping non applicable request for slave ",  requestFrame.id);
+            return;
+        }
+
+        print("processing for slave ", this.activeDeviceBuffer.deviceId);
+        
         
         this.responseView.setUint8(0, requestFrame.id); //id
         this.responseView.setUint8(1, requestFrame.func); //fc

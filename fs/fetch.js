@@ -103,12 +103,13 @@ let Fetch = {
                             profile.memory.discreteInputs = profile.memory.discreteInputs + 1;
                           }
                           if (param.lt === MODBUS_INPUT_REGISTERS) {
-                            profile.memory.inputRegisters = profile.memory.inputRegisters + 1;
+                            profile.memory.inputRegisters = profile.memory.inputRegisters + 2;
                           }
                           if (param.lt === MODBUS_HOLDING_REGISTERS) {
-                            profile.memory.holdingRegisters = profile.memory.holdingRegisters + 1;
+                            profile.memory.holdingRegisters = profile.memory.holdingRegisters + 2;
                           }
                       }
+ 
 
                       File.write(JSON.stringify(profile), "profile-" + profile.id + ".json");
                       

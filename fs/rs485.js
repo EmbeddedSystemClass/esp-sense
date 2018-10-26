@@ -133,8 +133,8 @@ let RS485 = {
     let dataView = DataView.create(buffer, 0, 255);
 
 
-    this.responseBuffer = RS485.calloc(255, 1);
-    this.responseView = DataView.create(this.responseBuffer, 0, 255);
+    //this.responseBuffer = RS485.calloc(255, 1);
+    //this.responseView = DataView.create(this.responseBuffer, 0, 255);
 
     this.requestFrame  = {
               id: -1,
@@ -195,14 +195,6 @@ let RS485 = {
 
 },
  
- 
-  addDevice: function(device) {
-    device.setSerial(this);
-    device.responseBuffer = this.responseBuffer;
-    device.responseView = this.responseView;
-    this.devices.push(device);
-  },
-
   readBytes: function(bytes) {
     let n = 0; let res = ''; 
     //let buf = 'xxxxxxxxxxxxxxxxxxxx'; // Should be > 5
@@ -328,18 +320,10 @@ let RS485 = {
 
   processRequest: function() {
     print("processing request");
-
-    for (let i in this.devices) {
-      let device = this.devices[i];
-      if (device.deviceId === this.requestFrame.id) {
-        device.processRequest(this.requestFrame);
-      }
-    }
-     
-
+ 
+    RS485.slaveRTU.processRequest(this.requestFrame);
+    
     print("processing done");
-
-
   },
 
   write: function(data, length) {
