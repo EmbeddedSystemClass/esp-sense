@@ -120,6 +120,8 @@ let RS485 = {
 
     this.n = 0;
     this.res = '';
+    this.available = 0;
+    this.expected = 1;
     return res;
   },
 
@@ -162,23 +164,29 @@ let RS485 = {
    GPIO.set_mode(serialPortConfig.controlPin, GPIO.MODE_OUTPUT);
    //let that = this;
    RS485.setDispatcher(serialPortConfig.uartNo, function(uartNo, that) {
-      let ra = RS485.readAvail(uartNo);
+      that.available = RS485.readAvail(uartNo);
       
-      if (ra > 0) {
+      if (that.available > 0 && that.available > that.expected) {
         let n = Timer.now() * 1000 * 1000;
-        print("before ", n);
+        //print("before ", n);
 
         // if ( n > ( that.last_receive_time + (that.timeout  * 15)) ) {
         //   that.readState = MODBUS_STATE_READ_DEVICE_ID;
         //   print("***RESET State");
         // }
        
+        let i = 0;
+        for (let i = 0; i < that.available; i += that.expected) {
+          // print('available ', that.available);
+          // print('i ', i);
+          // print('expected ', that.expected);
+          RS485.read(uartNo);
+        }
 
-        print('available ', ra);
-        let data = RS485.read(uartNo);
+        
        
         that.last_receive_time = Timer.now() * 1000 * 1000;
-        print("after ", that.last_receive_time);
+//        print("after ", that.last_receive_time);
       }
     }, this);
     
@@ -221,31 +229,29 @@ let RS485 = {
     if (this.n > 0) {
       this.res += this.buf.slice(0, this.n);
     }
-    print("Read  ", this.res);
+    //print("Read  ", this.res);
     return this.res;
   },
 
   readID: function() {
-
-  print("baud is ", this.baudRate);
-  print("Timeout is ", this.timeout);
-
     this.requestFrame.id = this.readInt8();;
     print("*ID=", this.requestFrame.id);
     this.readState = MODBUS_STATE_READ_FUNC;
+    this.expected = 1;
   },
    
   readFunc: function() {
     this.requestFrame.func = this.readInt8();
-    print("*Func=", this.requestFrame.func);
+    print("FC", this.requestFrame.func);
     this.readState = MODBUS_STATE_READ_ADDRESS;
+    this.expected = 2;
   },
  
   readInt8: function() {
     let valBuf = this.readBytes(1);
     
     let value = valBuf.at(0);
-    print("value is ", value);
+    //print("value is ", value);
     return value;
   }, 
 
@@ -253,13 +259,13 @@ let RS485 = {
     let valBuf = this.readBytes(2);
     
     let value = valBuf.at(0) << 8 | valBuf.at(1);
-    print("value is ", value);
+   // print("value is ", value);
     return value;
   }, 
 
   readAddress: function() {
     this.requestFrame.address = this.readInt16();
-    print("*Address=", this.requestFrame.address);
+    print("Addr", this.requestFrame.address);
 
     if (this.requestFrame.func === MODBUS_FUNC_READ_COILS ||
       this.requestFrame.func === MODBUS_FUNC_READ_DISCRETE_INPUTS ||
@@ -268,30 +274,35 @@ let RS485 = {
       this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_COILS || 
       this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS) {
         this.readState = MODBUS_STATE_READ_LENGTH;
+        this.expected = 2;
       }
 
     if (this.requestFrame.func === MODBUS_FUNC_WRITE_SINGLE_COIL ||
         this.requestFrame.func === MODBUS_FUNC_WRITE_SINGLE_REGISTER ) {
       this.readState = MODBUS_STATE_READ_DATA;
+      this.expected = 2;
     }
   }, 
  
 
   readByteCount: function() {
     this.requestFrame.byteCount = this.readInt8();
-    print("*Bytecount=", this.requestFrame.byteCount);
+    print("BC", this.requestFrame.byteCount);
+    this.expected = this.requestFrame.byteCount;
     this.readState = MODBUS_STATE_READ_DATA;
   },
 
   readLength: function() {
     this.requestFrame.quantity = this.readInt16();
-    print("*Quantity=", this.requestFrame.quantity);
+    print("Q", this.requestFrame.quantity);
 
     if (this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_COILS || 
         this.requestFrame.func === MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS) {
         this.readState = MODBUS_STATE_READ_BYTE_COUNT;
+        this.expected = 1;
     } else {
       this.readState = MODBUS_STATE_READ_CRC;
+      this.expected = 2;
     }
   },
 
@@ -310,39 +321,43 @@ let RS485 = {
 
     this.requestFrame.data = this.readBytes(length);
 
-    print("*Data=",     this.requestFrame.data);
+    print("DX",     this.requestFrame.data);
 
     for(let i = 0; i < length; i++) {
      let value = this.requestFrame.data.at(i);
-     print('coping value ', value);
+//     print('coping value ', value);
      this.requestFrame.dataView.setUint8(i, value);
     }
  
-
+    this.expected = 2;
     this.readState = MODBUS_STATE_READ_CRC;
-
   },
 
   readCrc: function () {
     this.requestFrame.crc = this.readInt16();
-    print("*CRC=", this.requestFrame.crc);
+    print("CRC", this.requestFrame.crc);
+
     this.readState = MODBUS_STATE_READ_DEVICE_ID;
+    this.expected = 1;
+
     this.checkCrc();
+
   },
 
   checkCrc: function () {
     //TODO: check CRC valid or not
-    print("checking crc ..");
+    //print("checking crc ..");
     //FIXME: If CRC valid, call this
     this.processRequest();
   },
 
   processRequest: function() {
-    print("processing request");
- 
+    //print("processing request");
+    
+    
     RS485.slaveRTU.processRequest(this.requestFrame);
     
-    print("processing done");
+    //print("processing done");
   },
 
   write: function(data, length) {
@@ -365,8 +380,6 @@ let RS485 = {
   },
 
   read: function(uartNo) {
-    print('Read called ', uartNo);
-    print('read state ', this.readState);
     
     if (this.readState === MODBUS_STATE_READ_DEVICE_ID) {
       return this.readID(uartNo);
@@ -399,4 +412,4 @@ let RS485 = {
   }
 
 };
- 
+  

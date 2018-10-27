@@ -112,21 +112,17 @@ let ModbusSlave = {
     },
 
     readHoldingRegisters: function(requestFrame) {
-        print("readHoldingRegisters ");
-
         this.responseView.setUint8(2, requestFrame.quantity * 2); // byte count
         this.responseLength += 1;
  
-
-        print("total quantity ", requestFrame.quantity);
-          
+  
         for (let i = 0; i < requestFrame.quantity; i++) {
             let address = requestFrame.address + (i * 2);
-            print("reading address  ", address);
+            //print("reading address  ", address);
 
             let value = this.activeDeviceBuffer.getHoldingRegisterUint16(address);
 
-            print("value at  register  ", value);
+            print("addr & val", addr, value);
             
             this.responseView.setUint16(3 + (i * 2), value);
             this.responseLength += 2;
@@ -259,7 +255,6 @@ let ModbusSlave = {
 
 
     processRequest: function(requestFrame) {
-        print('Device Process Request', requestFrame.id);
         if (requestFrame.id < 1 || requestFrame.id > 247) {
             print('error, slave id out of bound');
             return;
@@ -267,22 +262,10 @@ let ModbusSlave = {
 
         this.activeDeviceBuffer =  this.deviceBuffers[requestFrame.id];
 
-        // for (let i = 0; i < this.deviceBuffers.length; i++) {
-        //     if (this.deviceBuffers[i].deviceId === requestFrame.id) {
-        //         print("Found device at index ", i);
-        //         this.activeDeviceBuffer = this.deviceBuffers[i];
-        //         break;
-        //     }
-        //     print("Search device ", i);
-        // }
-
         if (!this.activeDeviceBuffer || this.activeDeviceBuffer === null) {
-            print("Skipping non applicable request for slave ",  requestFrame.id);
+            print("Slave not found",  requestFrame.id);
             return;
         }
-
-        print("processing for slave ", this.activeDeviceBuffer.deviceId);
-        
         
         this.responseView.setUint8(0, requestFrame.id); //id
         this.responseView.setUint8(1, requestFrame.func); //fc
@@ -322,7 +305,7 @@ let ModbusSlave = {
         }
 
         let crc = RS485.crc16(this.responseBuffer, this.responseLength);
-        print("crc Is  ", crc);
+        //print("crc Is  ", crc);
         this.responseView.setUint8(this.responseLength, (crc >> 8) & 0xff ); 
         this.responseView.setUint8(this.responseLength + 1, (crc  & 0xff ));
         
@@ -330,13 +313,12 @@ let ModbusSlave = {
 
      
         let s = mkstr(this.responseBuffer, this.responseLength);
-        print("response length ",  this.responseLength);
-        print("output frame ", s);
+        //print("response length ",  this.responseLength);
+        print(">>", s);
         this.serial.write(s, this.responseLength);
 
         // TODO: respond with unsupported code
     
-        print("processing done");
     }
 };
 
