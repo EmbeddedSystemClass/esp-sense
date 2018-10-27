@@ -46,16 +46,16 @@ let Fetch = {
     fetchEdge: function(id) {
         Fetch.downloadedUrls = []; 
 
-        Fetch.getJson(Fetch.apiEndPoint + '/provisions/edges/' + id, 
+        Fetch.getJson(Fetch.apiEndPoint + '/micro/edges/' + id, 
                    function(err, edge, ud) {
                       print("Got callback ", edge);
                       File.write(JSON.stringify(edge), "edge.json");
                        
                       for (let i =0; i < edge.modbus.length; i++) {
                         let slaveInfo = edge.modbus[i];
-                        print("device id", slaveInfo.deviceId);
-                        
-                        Fetch.fetchProfile(slaveInfo.deviceId);
+                        print("device id", slaveInfo.id);
+                      
+                        Fetch.fetchProfile(slaveInfo.id);
                       }
                    }
         );

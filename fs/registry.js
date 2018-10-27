@@ -103,7 +103,7 @@ let Registry = {
         let edge = JSON.parse(content);    
         for (let i =0; i < edge.modbus.length; i++) {
             let slaveInfo = edge.modbus[i];
-            Registry.deleteProfile(slaveInfo.deviceId);
+            Registry.deleteProfile(slaveInfo.id);
         }
                 File.remove("edge.json");
                 print("All file deleted");
@@ -136,7 +136,7 @@ let Registry = {
      
     for (let i =0; i < Registry.edge.modbus.length; i++) {
         let slaveInfo = Registry.edge.modbus[i];
-        Registry.loadProfile(slaveInfo.deviceId);
+        Registry.loadProfile(slaveInfo.id);
     }
     
     
@@ -176,10 +176,10 @@ let Registry = {
          let index = -1;
 
          for (let k = 0; k < Registry.profiles.length; k++) {
-            if (Registry.profiles[k].id === slaveInfo.deviceId) {
+            if (Registry.profiles[k].id === slaveInfo.id) {
                 index = k;
                 break;
-            }
+            }   
          }
 
 
@@ -187,9 +187,9 @@ let Registry = {
 
             //print("Creating buffer");
             let deviceBuffer = ModbusBuffer.create(Registry.profiles[index]);
-            deviceBuffer.deviceId = slaveInfo.slaveId;
+            deviceBuffer.deviceId = slaveInfo.sid;
             
-            deviceBuffers[slaveInfo.slaveId] = deviceBuffer;
+            deviceBuffers[slaveInfo.sid] = deviceBuffer;
         }
     }
 
