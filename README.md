@@ -1,4 +1,5 @@
 
+
 ## Get Started
 
 - Install node.js
@@ -43,6 +44,12 @@ mos build --arch esp32 && mos flash
 
 ```
  mos put fs/init.js && mos call Sys.Reboot && mos console
+```
+
+## Get Mac Address
+
+```
+mos call Sys.GetInfo
 ```
 
 # WIFI

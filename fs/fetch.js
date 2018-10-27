@@ -1,5 +1,6 @@
 let Fetch = {
-    apiEndPoint: "http://iiot.nodesense.ai:7777",
+   apiEndPoint: "http://iiot.nodesense.ai:7777",
+   //apiEndPoint: "http://192.168.2.7:7777",
     downloadedUrls: [],
     getJson: function (url, callback, userDef) {
         print("Downloading ", url);
@@ -86,29 +87,29 @@ let Fetch = {
                       //let apiUrl = Fetch.apiEndPoint + '/api/profiles/' + profile.id;
                       //Fetch.downloadedUrls.push(apiUrl);
 
-                      profile.memory = {
-                        coils: 0,
-                        holdingRegisters: 0,
-                        inputRegisters: 0,
-                        discreteInputs: 0
-                      };
+                      // profile.memory = {
+                      //   coils: 0,
+                      //   holdingRegisters: 0,
+                      //   inputRegisters: 0,
+                      //   discreteInputs: 0
+                      // };
  
 
-                      for (let i = 0; i < profile.config.length; i++) {
-                          let param = profile.config[i];
-                          if (param.lt === MODBUS_COILS) {
-                            profile.memory.coils = profile.memory.coils + 1; 
-                          }
-                          if (param.lt === MODBUS_INPUT_COILS) {
-                            profile.memory.discreteInputs = profile.memory.discreteInputs + 1;
-                          }
-                          if (param.lt === MODBUS_INPUT_REGISTERS) {
-                            profile.memory.inputRegisters = profile.memory.inputRegisters + 2;
-                          }
-                          if (param.lt === MODBUS_HOLDING_REGISTERS) {
-                            profile.memory.holdingRegisters = profile.memory.holdingRegisters + 2;
-                          }
-                      }
+                      // for (let i = 0; i < profile.config.length; i++) {
+                      //     let param = profile.config[i];
+                      //     if (param.lt === MODBUS_COILS) {
+                      //       profile.memory.coils = profile.memory.coils + 1; 
+                      //     }
+                      //     if (param.lt === MODBUS_INPUT_COILS) {
+                      //       profile.memory.discreteInputs = profile.memory.discreteInputs + 1;
+                      //     }
+                      //     if (param.lt === MODBUS_INPUT_REGISTERS) {
+                      //       profile.memory.inputRegisters = profile.memory.inputRegisters + 2;
+                      //     }
+                      //     if (param.lt === MODBUS_HOLDING_REGISTERS) {
+                      //       profile.memory.holdingRegisters = profile.memory.holdingRegisters + 2;
+                      //     }
+                      // }
  
 
                       File.write(JSON.stringify(profile), "profile-" + profile.id + ".json");

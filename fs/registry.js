@@ -141,6 +141,8 @@ let Registry = {
     for (let i = 0; i < Registry.edge.modbus.length; i++) {
           let slaveInfo =  Registry.edge.modbus[i];
 
+          Sys.wdt_feed();
+
           print("finding profile");
          //let profile = Registry.findProfile(slaveInfo.deviceId);
 
