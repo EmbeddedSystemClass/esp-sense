@@ -34,8 +34,8 @@ print(result)
 
 # result= client.read_holding_registers(1, 10 ,unit= 0x0a)
 # print(result)
-# rr = client.read_discrete_inputs(0, 8, unit=0x01)
-# print(rr)
+#rr = client.read_discrete_inputs(1, 1, unit=0x01)
+#print(rr)
 
 # client.write_coil(0x00, True, unit= 0x01)
 

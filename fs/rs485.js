@@ -35,6 +35,9 @@ let FLOAT = 4;
 let DOUBLE = 5;
 let STRING = 6;
 
+let NOT_USED = 100;
+let RESERVED = 100;
+
 let RS485 = {
   _free: ffi('void free(void *)'),
   _cdef: ffi('void *mgos_uart_config_get_default(int)'),
