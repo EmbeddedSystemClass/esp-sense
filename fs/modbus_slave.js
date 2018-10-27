@@ -10,11 +10,6 @@ let ModbusSlave = {
         this.responseLength = 0;
         this.deviceBuffers = deviceBuffers;
         this.activeDeviceBuffer = null;
- 
-        // this.coils = Buffer.create(config.coils);
-        // this.discreteInputs = Buffer.create(config.discreteInputs);
-        // this.holdingRegisters = Buffer.create(config.holdingRegisters);
-        // this.inputRegisters = Buffer.create(config.inputRegisters);
     },
     
     setHoldingRegister: function(address, value) {
@@ -122,7 +117,7 @@ let ModbusSlave = {
 
             let value = this.activeDeviceBuffer.getHoldingRegisterUint16(address);
 
-            print("addr & val", addr, value);
+            print("addr & val", address, value);
             
             this.responseView.setUint16(3 + (i * 2), value);
             this.responseLength += 2;

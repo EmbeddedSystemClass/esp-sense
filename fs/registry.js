@@ -4,51 +4,44 @@ let ModbusBuffer = {
     _dataBuffer: {
         init: function(profile) {
             this.profile = profile;
-
-
+            this.memory = profile.memory;
+ 
             this.size = profile.memory.coils + profile.memory.holdingRegisters + profile.memory.inputRegisters + profile.memory.discreteInputs;
             this.buffer = ModbusBuffer.calloc(this.size, 1);
-            print("Size buffer ", this.size);
-            print("Parts", JSON.stringify(profile.memory));
-
-            this.coils = DataView.create(this.buffer, 0, profile.memory.coils);
-
-            this.discrete = DataView.create(this.buffer, profile.memory.coils, profile.memory.discreteInputs);
-
-            this.registers = DataView.create(this.buffer, profile.memory.coils + profile.memory.discreteInputs, profile.memory.holdingRegisters);
-
-            this.inputRegisters = DataView.create(this.buffer,  profile.memory.coils + profile.memory.discreteInputs + profile.memory.holdingRegisters, profile.memory.inputRegisters);
-            
+             
+            this.dataBuffer = DataView.create(this.buffer, 0, this.size);
+ 
             this.offset = 0;
             this.le = false;
+ 
         },
 
         getCoil: function(address) {
-            return this.coils.getUint8(address - this.offset);
+            return this.dataBuffer.getUint8(address - this.offset);
         },
 
         setCoil: function(address, value) {
-            return this.coils.setUint8(address - this.offset, value);
+            return this.dataBuffer.setUint8(address - this.offset, value);
         },
         
         getDiscrete: function(address) {
-            return this.discrete.getUint8(address - this.offset);
+            return this.dataBuffer.getUint8(address - this.offset);
         },
 
         setDiscrete: function(address, value) {
-            return this.discrete.setUint8(address - this.offset, value);
+            return this.dataBuffer.setUint8(address - this.offset, value);
         },
 
         getHoldingRegisterUint16: function(address) {
-            return this.registers.getUint16(address - this.offset, this.le);
+            return this.dataBuffer.getUint16(address - this.offset, this.le);
         },
 
         getInputRegisterUint16: function(address) {
-            return this.inputRegisters.getUint16(address - this.offset, this.le);
+            return this.dataBuffer.getUint16(address - this.offset, this.le);
         },
         
         setUint16: function(address, value, le) {
-            return this.dataView.setUint16(address - this.offset, value, le);
+            return this.dataBuffer.setUint16(address - this.offset, value, le);
         }
     },
 
@@ -71,7 +64,7 @@ let Registry = {
            return;
         }
         
-        print("edge loaded", content);
+        //print("edge loaded", content);
         let edge = JSON.parse(content);
         print("loaded edge ", edge.id);
         Registry.edge = edge;
@@ -106,7 +99,7 @@ let Registry = {
            return;
         }
         
-        print("edge loaded", content);
+        print("edge loaded");
         let edge = JSON.parse(content);    
         for (let i =0; i < edge.modbus.length; i++) {
             let slaveInfo = edge.modbus[i];
@@ -139,34 +132,10 @@ let Registry = {
  
 
   loadModbus: function() {
-      print("loadModbus Enter");
-      let config =  {
-        coils: {
-          offset: 0,
-          size: 20
-        },
-        discreteInputs: {
-          offset: 0,
-          size: 20,
-          le: false
-        },
-        holdingRegisters: {
-          offset: 0,
-          size: 100,
-          le: false
-        },
-        inputRegisters: {
-          offset: 0,
-          size: 20,
-          le: false
-        }
-    };
-
-
+    print("loadModbus Enter");
+     
     for (let i =0; i < Registry.edge.modbus.length; i++) {
         let slaveInfo = Registry.edge.modbus[i];
-        print("device id", slaveInfo.deviceId);
-        print("slave id", slaveInfo.slaveId);
         Registry.loadProfile(slaveInfo.deviceId);
     }
     
@@ -203,10 +172,7 @@ let Registry = {
           let slaveInfo =  Registry.edge.modbus[i];
 
           Sys.wdt_feed();
-
-          print("finding profile");
-         //let profile = Registry.findProfile(slaveInfo.deviceId);
-
+ 
          let index = -1;
 
          for (let k = 0; k < Registry.profiles.length; k++) {
@@ -219,20 +185,11 @@ let Registry = {
 
         if (index > -1) {
 
-            print("Creating buffer");
+            //print("Creating buffer");
             let deviceBuffer = ModbusBuffer.create(Registry.profiles[index]);
             deviceBuffer.deviceId = slaveInfo.slaveId;
-
-            //deviceBuffers.push(deviceBuffer);
+            
             deviceBuffers[slaveInfo.slaveId] = deviceBuffer;
-
-            //FIXME: need to maintain deviceId
-
-            print("Done Creating buffer");
-            //print("Creating device ", slaveInfo.slaveId);
-            
-            //print("Device Added ", slaveInfo.slaveId);
-            
         }
     }
 

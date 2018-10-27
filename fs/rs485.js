@@ -362,19 +362,7 @@ let RS485 = {
 
   write: function(data, length) {
     GPIO.write(this.controlPin, 1); // HIGH, RTS
-
-
-    print("total size to available ", this.writeAvail(200));
-
     let l = this._wr(this.uartNo, data, length);
-
-    print("total size to write ", length);
-    print("total size written ", l);
-    print("this uart no ", this.uartNo);
-
-    print("total size to available now", this.writeAvail(200));
-
-
     this.flush(this.uartNo);
     GPIO.write(this.controlPin, 0); // LOW, CTS - CLEAR TO SEND
   },
