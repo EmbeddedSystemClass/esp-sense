@@ -170,10 +170,10 @@ let RS485 = {
         let n = Timer.now() * 1000 * 1000;
         //print("before ", n);
 
-        // if ( n > ( that.last_receive_time + (that.timeout  * 15)) ) {
-        //   that.readState = MODBUS_STATE_READ_DEVICE_ID;
-        //   print("***RESET State");
-        // }
+        if ( n > ( that.last_receive_time + (that.timeout  * 3)) ) {
+          that.readState = MODBUS_STATE_READ_DEVICE_ID;
+          print("***RESET State", that.available);
+        }
        
         let i = 0;
         for (let i = 0; i < that.available; i += that.expected) {
