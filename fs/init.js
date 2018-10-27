@@ -107,7 +107,7 @@ else
 // RS485.addDevice(tempMeter1.slave);
  
 
-Timer.set(5000 /* milliseconds */, Timer.REPEAT, function() {
+Timer.set(60000 /* milliseconds */, Timer.REPEAT, function() {
    print(' RAM: ' + JSON.stringify(Sys.free_ram()));
 
   //let res = MQTT.pub('presence', JSON.stringify({ ram: Sys.free_ram(), b: 2 }), 0);

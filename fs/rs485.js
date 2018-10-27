@@ -117,6 +117,9 @@ let RS485 = {
     //FIXME: Can we allocate memory without using hardcode string?
     this.buf = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'; // Should be > 5
 
+
+    this.n = 0;
+    this.res = '';
     return res;
   },
 
@@ -198,7 +201,7 @@ let RS485 = {
 
 },
  
-  readBytes: function(bytes) {
+  readBytes2: function(bytes) {
     let n = 0; let res = ''; 
     //let buf = 'xxxxxxxxxxxxxxxxxxxx'; // Should be > 5
     n = this._rd(this.uartNo, this.buf, bytes);
@@ -207,6 +210,19 @@ let RS485 = {
     }
     print("Read  ", res);
     return res;
+  },
+
+  readBytes: function(bytes) {
+    //let n = 0; let res = ''; 
+    this.n = 0;
+    this.res = '';
+    //let buf = 'xxxxxxxxxxxxxxxxxxxx'; // Should be > 5
+    this.n = this._rd(this.uartNo, this.buf, bytes);
+    if (this.n > 0) {
+      this.res += this.buf.slice(0, this.n);
+    }
+    print("Read  ", this.res);
+    return this.res;
   },
 
   readID: function() {

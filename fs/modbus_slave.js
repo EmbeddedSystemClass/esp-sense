@@ -260,14 +260,21 @@ let ModbusSlave = {
 
     processRequest: function(requestFrame) {
         print('Device Process Request', requestFrame.id);
-
-        this.activeDeviceBuffer = null;
-        for (let i = 0; i < this.deviceBuffers.length; i++) {
-            if (this.deviceBuffers[i].deviceId === requestFrame.id) {
-                this.activeDeviceBuffer = this.deviceBuffers[i];
-                break;
-            }
+        if (requestFrame.id < 1 || requestFrame.id > 247) {
+            print('error, slave id out of bound');
+            return;
         }
+
+        this.activeDeviceBuffer =  this.deviceBuffers[requestFrame.id];
+
+        // for (let i = 0; i < this.deviceBuffers.length; i++) {
+        //     if (this.deviceBuffers[i].deviceId === requestFrame.id) {
+        //         print("Found device at index ", i);
+        //         this.activeDeviceBuffer = this.deviceBuffers[i];
+        //         break;
+        //     }
+        //     print("Search device ", i);
+        // }
 
         if (!this.activeDeviceBuffer || this.activeDeviceBuffer === null) {
             print("Skipping non applicable request for slave ",  requestFrame.id);

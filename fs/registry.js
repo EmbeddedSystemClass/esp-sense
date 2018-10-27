@@ -172,7 +172,32 @@ let Registry = {
     
     
 
-    let deviceBuffers = [];
+    let deviceBuffers = [null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, null, null
+    ];
        
     for (let i = 0; i < Registry.edge.modbus.length; i++) {
           let slaveInfo =  Registry.edge.modbus[i];
@@ -198,7 +223,9 @@ let Registry = {
             let deviceBuffer = ModbusBuffer.create(Registry.profiles[index]);
             deviceBuffer.deviceId = slaveInfo.slaveId;
 
-            deviceBuffers.push(deviceBuffer);
+            //deviceBuffers.push(deviceBuffer);
+            deviceBuffers[slaveInfo.slaveId] = deviceBuffer;
+
             //FIXME: need to maintain deviceId
 
             print("Done Creating buffer");
@@ -209,6 +236,7 @@ let Registry = {
         }
     }
 
+    
     let  slave = Object.create(ModbusSlave);
      
      slave.init(deviceBuffers);
@@ -217,8 +245,8 @@ let Registry = {
     RS485.slaveRTU = slave;
     slave.serial = RS485;
     
-    //Registry.profiles = [];
-    //Registry.edge = null;
+    Registry.profiles = [];
+    Registry.edge = null;
     print("loadModbus Exit");
   }
 };
