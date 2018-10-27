@@ -19,7 +19,6 @@ cd esp-sense
 ```
 
 ## Yarn commands
-
 ```
 yarn flash
 yarn fs

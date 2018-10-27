@@ -14,7 +14,7 @@ log.setLevel(logging.DEBUG)
 #unit= the slave unit this request is targeting
 #address= the starting address to read from
 
-client= ModbusClient(method = "rtu", port="/dev/tty.wchusbserial1420", 
+client= ModbusClient(method = "rtu", port="COM11", 
                                      stopbits = 1, 
                                      bytesize = 8, 
                                      parity = 'N',
@@ -29,7 +29,7 @@ print( connection)
 # print(result)
 
 #Starting add, num of reg to read, slave unit.
-result= client.read_holding_registers(1, 2 ,unit= 10)
+result= client.read_holding_registers(1, 1 ,unit= 20)
 print(result)
 
 # result= client.read_holding_registers(1, 10 ,unit= 0x0a)

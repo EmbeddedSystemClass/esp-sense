@@ -29,48 +29,74 @@ RPC.call(RPC.LOCAL, 'Sys.GetInfo', null, function(resp, ud) {
 
 Cfg.set({debug: {level: 3}});
 
-let rs485Config = {
-  baudRate: 9600,
-  parity: 0,
-  numStopBits: 1
-};
-
-File.write(JSON.stringify(rs485Config), "rs485.json");
-
- 
-let rs485Text = File.read("rs485.json");
-
-let rs485 = JSON.parse(rs485Text);
-
-print("Baud is ", rs485.baudRate);
-
-print("parity is ", rs485.parity);
-
-print("numStopBits is ", rs485.numStopBits);
- 
-
-let serialPortConfig = {
-  uartNo: 2,
-  controlPin: 23,
-  config: {
-        baudRate: rs485.baudRate,
-        parity: rs485.parity,
-        numStopBits: rs485.numStopBits,
-        esp32: {
-          gpio: {
-            rx: 16,
-            tx: 17
-          }
-        }
-      }
-};
-
-RS485.setFlowControl(23);
-
-RS485.init(serialPortConfig);
-
 
 Registry.loadEdge();
+
+if (Registry.edge) {
+  print("Edge Setting found");
+  if (Registry.edge.enableModbus === true) {
+    print("Modbus Enabled, loading modbus");
+
+    let rs485 = Registry.edge.rs485;
+
+    if (!rs485 || rs485 === null || rs485 === undefined) {
+      print("RS 485 settings not found");
+      rs485 = {
+          baudRate: 9600,
+          parity: 0,
+          numStopBits: 1
+        };
+    }
+    print("Baud is ", rs485.baudRate);
+
+    print("parity is ", rs485.parity);
+
+    print("numStopBits is ", rs485.numStopBits);
+    
+    let serialPortConfig = {
+      uartNo: 2,
+      controlPin: 23,
+      config: {
+            baudRate: rs485.baudRate,
+            parity: rs485.parity,
+            numStopBits: rs485.numStopBits,
+            esp32: {
+              gpio: {
+                rx: 16,
+                tx: 17
+              }
+            }
+          }
+    };
+    
+    RS485.setFlowControl(23);
+    
+    RS485.init(serialPortConfig);
+    
+    Registry.loadModbus();
+  } 
+  else{
+    print("Modbus not enabled");
+  }
+}
+else
+{
+  print("Edge Setting  not found");
+}
+
+// let rs485Config = {
+//   baudRate: 9600,
+//   parity: 0,
+//   numStopBits: 1
+// };
+
+// File.write(JSON.stringify(rs485Config), "rs485.json");
+
+ 
+// let rs485Text = File.read("rs485.json");
+
+// let rs485 = JSON.parse(rs485Text);
+
 
 
 // let energyMeter1 = EnergyMeter.create(1);
@@ -91,21 +117,7 @@ Timer.set(5000 /* milliseconds */, Timer.REPEAT, function() {
 }, null);
 
 // Registry.loadEdge();
-
-Timer.set(10000,Timer.REPEAT,function(){
- // Registry.loadEdge();
-}, null);
-
-Timer.set(10000,Timer.REPEAT,function(){
   
-  // RPC.call(RPC.LOCAL, 'Sys.GetInfo', null, function(resp, ud) {
-  //   //print('Response:', JSON.stringify(resp));
-  //   print('MAC address:', resp.mac);
-  //   Fetch.fetchEdge(resp.mac);
-  // }, null);
-
-}, null);
-
 let pin = 0;
 
 GPIO.set_button_handler(pin, GPIO.PULL_UP, GPIO.INT_EDGE_NEG, 200, function() {
@@ -117,10 +129,18 @@ GPIO.set_button_handler(pin, GPIO.PULL_UP, GPIO.INT_EDGE_NEG, 200, function() {
     //print('Response:', JSON.stringify(resp));
     print('MAC address:', resp.mac);
     Fetch.fetchEdge(resp.mac);
+    print("Fetch completed");
   }, null);
 
 }, null);
  
+
+let delpin=22;
+
+GPIO.set_button_handler(delpin, GPIO.PULL_UP, GPIO.INT_EDGE_NEG, 200, function() {
+  print("Delete Button pressed");
+Registry.resetEdge();
+}, null);
 
 
 //  MQTT.sub('presence', function(conn, topic, msg) {

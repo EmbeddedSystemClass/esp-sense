@@ -63,6 +63,29 @@ let ModbusBuffer = {
 let Registry = {
     profiles: [],
 
+    loadEdge: function () {
+        let content = File.read("edge.json");
+        
+        if (!content || content === null || content === '') {
+           print("No edge.json found");
+           return;
+        }
+        
+        print("edge loaded", content);
+        let edge = JSON.parse(content);
+        print("loaded edge ", edge.id);
+        Registry.edge = edge;
+    
+        // for (let i =0; i < edge.modbus.length; i++) {
+        //     let slaveInfo = edge.modbus[i];
+        //     print("device id", slaveInfo.deviceId);
+        //     print("slave id", slaveInfo.slaveId);
+        //     Registry.loadProfile(slaveInfo.deviceId);
+        // }
+        
+        // Registry.init();
+      },
+
     loadProfile: function (id) {
         if (Registry.findProfile(id)) {
             return;
@@ -75,30 +98,35 @@ let Registry = {
             Registry.profiles.push(profile);
         }
     },
+    resetEdge: function () {
+        let content = File.read("edge.json");
+        
+        if (!content || content === null || content === '') {
+           print("No edge.json found");
+           return;
+        }
+        
+        print("edge loaded", content);
+        let edge = JSON.parse(content);    
+        for (let i =0; i < edge.modbus.length; i++) {
+            let slaveInfo = edge.modbus[i];
+            Registry.deleteProfile(slaveInfo.deviceId);
+        }
+                File.remove("edge.json");
+                print("All file deleted");
+                Sys.reboot(1000000);
+
+
+      },
+
+    
+      deleteProfile: function (id) {
+        File.remove("profile-" + id + ".json");
+        print("Deleted ---->profile-" + id + ".json");
+    },
  
    
-  loadEdge: function () {
-    let content = File.read("edge.json");
-    
-    if (!content || content === null || content === '') {
-       print("No edge.json found");
-       return;
-    }
-    
-    print("edge loaded", content);
-    let edge = JSON.parse(content);
-    print("loaded edge ", edge.id);
-    Registry.edge = edge;
-
-    for (let i =0; i < edge.modbus.length; i++) {
-        let slaveInfo = edge.modbus[i];
-        print("device id", slaveInfo.deviceId);
-        print("slave id", slaveInfo.slaveId);
-        Registry.loadProfile(slaveInfo.deviceId);
-    }
-    
-    Registry.init();
-  },
+  
 
   findProfile: function(deviceId) {
      for (let k = 0; k < Registry.profiles.length; k++) {
@@ -110,8 +138,8 @@ let Registry = {
 
  
 
-  init: function() {
-      print("Init Enter");
+  loadModbus: function() {
+      print("loadModbus Enter");
       let config =  {
         coils: {
           offset: 0,
@@ -134,6 +162,14 @@ let Registry = {
         }
     };
 
+
+    for (let i =0; i < Registry.edge.modbus.length; i++) {
+        let slaveInfo = Registry.edge.modbus[i];
+        print("device id", slaveInfo.deviceId);
+        print("slave id", slaveInfo.slaveId);
+        Registry.loadProfile(slaveInfo.deviceId);
+    }
+    
     
 
     let deviceBuffers = [];
@@ -179,8 +215,8 @@ let Registry = {
     RS485.slaveRTU = slave;
     slave.serial = RS485;
     
-    Registry.profiles = [];
-    Registry.edge = null;
-    print("Init Exit");
+    //Registry.profiles = [];
+    //Registry.edge = null;
+    print("loadModbus Exit");
   }
 };
