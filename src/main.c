@@ -78,6 +78,74 @@ uint8_t table_crc_lo[] = {
     0x43, 0x83, 0x41, 0x81, 0x80, 0x40
 };
 
+
+typedef struct dv_buf {
+  char *buf;   /* Buffer pointer */
+  size_t size; /* Buffer size allocated by realloc(1). Must be >= len */
+} dv_buf;
+
+ 
+
+dv_buf* dv_alloc( int size) 
+{
+      dv_buf* dv = calloc(sizeof(dv_buf), 1);
+      dv->size = size;
+      dv->buf = calloc(size, 1);
+     
+      return dv;
+}
+
+
+int dv_get_int8(dv_buf* buf, int index) {
+    dv_buf* dv = (dv_buf*) buf;
+    char v = (char) dv->buf[index];
+    return v;
+}
+
+
+
+int dv_get_int16(dv_buf* buf, int index) {
+    dv_buf* dv = (dv_buf*) buf;
+    int v = (char) dv->buf[index];
+    v = (v << 8) | (dv->buf[index + 1] & 0xFF);
+    return v;
+}
+
+
+int dv_get_int32(dv_buf* buf, int index) {
+    dv_buf* dv = (dv_buf*) buf;
+    int v = (char) (dv->buf[index]  & 0xFF);
+    v = (v << 8) | (dv->buf[index + 1] & 0xFF);
+    v = (v << 8) | (dv->buf[index + 2] & 0xFF);
+    v = (v << 8) | (dv->buf[index + 8] & 0xFF);
+    return v;
+}
+
+
+int dv_set_int8(dv_buf* buf, int index, int v) {
+    dv_buf* dv = (dv_buf*) buf;
+    dv->buf[index] = (v & 0xFF);
+    return 1;
+}
+
+int dv_set_int16(dv_buf* buf, int index, int v) {
+    dv_buf* dv = (dv_buf*) buf;
+    dv->buf[index] = (v & 0xFF);
+    dv->buf[index + 1] = ((v >> 8) & 0xFF);
+    return 1;
+}
+
+int dv_set_int32(dv_buf* buf, int index, int v) {
+    dv_buf* dv = (dv_buf*) buf;
+    dv->buf[index] = (v & 0xFF);
+    dv->buf[index + 1] = ((v >> 8) & 0xFF);
+    dv->buf[index + 2] = ((v >> 16) & 0xFF);
+    dv->buf[index + 3] = ((v >> 24) & 0xFF);
+    return 1;
+}
+
+
+
 int crc16(uint8_t *buffer, int buffer_length)
 {
     uint8_t crc_hi = 0xFF; /* high CRC byte initialized */

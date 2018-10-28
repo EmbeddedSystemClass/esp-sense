@@ -1,6 +1,6 @@
 let ModbusBuffer = {
     calloc: ffi('void *calloc(int, int)'),
-
+ 
     _dataBuffer: {
         init: function(profile) {
             this.profile = profile;
@@ -10,7 +10,7 @@ let ModbusBuffer = {
             this.buffer = ModbusBuffer.calloc(this.size, 1);
              
             this.dataBuffer = DataView.create(this.buffer, 0, this.size);
- 
+
             this.offset = 0;
             this.le = false;
  

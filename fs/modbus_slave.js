@@ -115,11 +115,14 @@ let ModbusSlave = {
             let address = requestFrame.address + (i * 2);
             //print("reading address  ", address);
 
+            //this.responseBuffer = RS485.calloc(255, 1);
+
             let value = this.activeDeviceBuffer.getHoldingRegisterUint16(address);
 
-            print("addr & val", address, value);
+            //let value = 0;
+            //print("addr & val", address, value);
             
-            this.responseView.setUint16(3 + (i * 2), value);
+            //this.responseView.setUint16(3 + (i * 2), value);
             this.responseLength += 2;
         }
         
@@ -309,6 +312,9 @@ let ModbusSlave = {
      
         let s = mkstr(this.responseBuffer, this.responseLength);
         //print("response length ",  this.responseLength);
+        for (let i = 0; i < this.responseLength; i++) {
+            print(s[i], s.at(i));
+        }
         print(">>", s);
         this.serial.write(s, this.responseLength);
 

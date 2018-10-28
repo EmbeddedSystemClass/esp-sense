@@ -77,6 +77,8 @@ let RS485 = {
 
  
   calloc: ffi('void *calloc(int, int)'),
+   
+
   crc16: ffi('int crc16(void *, int)'),
 
  

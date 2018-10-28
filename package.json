@@ -8,6 +8,7 @@
     "fs": "sh upload.sh",
     "wfs": "upload.bat",
     "init-js": "mos put fs/init.js && mos call Sys.Reboot && mos console",
+    "cb": "mos build --verbose --arch esp32 --clean && mos flash",
     "console": "mos console"
   },
   "repository": {
