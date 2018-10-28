@@ -9,13 +9,10 @@ load('api_rpc.js');
 load('api_http.js');
 load('api_mqtt.js');
 
-load('buffer.js');
 load('fetch.js');
 load("rs485.js");
 load("modbus_slave.js");
-
-load("modbus_rtu.js");
-
+ 
 load("registry.js");
 
 //load("energy_meter.js");
