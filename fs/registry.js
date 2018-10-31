@@ -1,5 +1,13 @@
 let ModbusBuffer = {
     calloc: ffi('void *calloc(int, int)'),
+    dv_alloc: ffi('void *dv_alloc(int)'),
+  
+    getInt8: ffi('int dv_get_int8(void*, int)'),
+    setInt8: ffi('int dv_set_int8(void*, int, int)'),
+    getInt16: ffi('int dv_get_int16(void*, int)'),
+    getInt32: ffi('int dv_get_int32(void*, int)'),
+    setInt16: ffi('int dv_set_int16(void*, int, int)'),
+    setInt32: ffi('int dv_set_int32(void*, int, int)'),
  
     _dataBuffer: {
         init: function(profile) {
@@ -7,9 +15,9 @@ let ModbusBuffer = {
             this.memory = profile.memory;
  
             this.size = profile.memory.coils + profile.memory.holdingRegisters + profile.memory.inputRegisters + profile.memory.discreteInputs;
-            this.buffer = ModbusBuffer.calloc(this.size, 1);
+            //this.buffer = ModbusBuffer.calloc(this.size, 1);
              
-            this.dataBuffer = DataView.create(this.buffer, 0, this.size);
+            this.dataBuffer = ModbusBuffer.dv_alloc(200);
 
             this.offset = 0;
             this.le = false;
@@ -17,31 +25,31 @@ let ModbusBuffer = {
         },
 
         getCoil: function(address) {
-            return this.dataBuffer.getUint8(address - this.offset);
+            return ModbusBuffer.getInt8(this.dataBuffer, address - this.offset);
         },
 
         setCoil: function(address, value) {
-            return this.dataBuffer.setUint8(address - this.offset, value);
+            return ModbusBuffer.setInt8(this.dataBuffer, address - this.offset, value);
         },
         
         getDiscrete: function(address) {
-            return this.dataBuffer.getUint8(address - this.offset);
+            return ModbusBuffer.getInt8(this.dataBuffer, address - this.offset);
         },
 
         setDiscrete: function(address, value) {
-            return this.dataBuffer.setUint8(address - this.offset, value);
+            return ModbusBuffer.setInt8(this.dataBuffer, address - this.offset, value);
         },
 
         getHoldingRegisterUint16: function(address) {
-            return this.dataBuffer.getUint16(address - this.offset, this.le);
+            return ModbusBuffer.getInt16(this.dataBuffer, address - this.offset);
         },
 
         getInputRegisterUint16: function(address) {
-            return this.dataBuffer.getUint16(address - this.offset, this.le);
+            return ModbusBuffer.getInt16(this.dataBuffer, address - this.offset);
         },
         
-        setUint16: function(address, value, le) {
-            return this.dataBuffer.setUint16(address - this.offset, value, le);
+        setUint16: function(address, value) {
+            return ModbusBuffer.setInt16(this.dataBuffer, address - this.offset, value);
         }
     },
 

@@ -106,9 +106,9 @@ else
 
 let Obj = {
   dv_alloc: ffi('void *dv_alloc(int)'),
+  
   dv_get_int8: ffi('int dv_get_int8(void*, int)'),
   dv_set_int8: ffi('int dv_set_int8(void*, int, int)'),
-
   dv_get_int16: ffi('int dv_get_int16(void*, int)'),
   dv_get_int32: ffi('int dv_get_int32(void*, int)'),
   dv_set_int16: ffi('int dv_set_int16(void*, int, int)'),
@@ -121,25 +121,102 @@ Timer.set(5000 /* milliseconds */, Timer.REPEAT, function() {
   print(' Timer now: ' + JSON.stringify(Sys.free_ram()));
 
   print("creating object");
-  // let buffer2 = Obj.calloc(10, 1);
+ // let buffer2 = Obj.calloc(10, 1);
    
     let dv = Obj.dv_alloc(200); 
     Obj.dv_set_int8(dv, 0, 8);
     let v = Obj.dv_get_int8(dv, 0);
-    v = v + 1;
+    print("int8 is ", v);
 
-    print("value is ", v);
+    // v = v + 1;
+
+    // print("value is ", v);
 
     Obj.dv_set_int16(dv, 2, 16);
-    v = Obj.dv_get_int16(dv, 12);
+    v = Obj.dv_get_int16(dv, 2);
     
-    print("value is ", v);
+    print("value 2 bytes is ", v);
+
+
+    Obj.dv_set_int16(dv, 2, 150);
+    v = Obj.dv_get_int16(dv, 2);
+    
+    print("value 2 bytes is ", v);
+
+
+    Obj.dv_set_int16(dv, 2, 300);
+    v = Obj.dv_get_int16(dv, 2);
+    
+    print("value 2 bytes is ", v);
+
+
+    Obj.dv_set_int16(dv, 2, 30000);
+    v = Obj.dv_get_int16(dv, 2);
+
+
+    Obj.dv_set_int16(dv, 2, 36000);
+    v = Obj.dv_get_int16(dv, 2);
+
+
+    print("value 2 bytes is ", v);
+
+    Obj.dv_set_int16(dv, 2, 63000);
+    v = Obj.dv_get_int16(dv, 2);
+    
+    print("value 2 bytes is ", v);
 
 
     Obj.dv_set_int32(dv, 6, 32);
-    v = Obj.dv_get_int32(dv, 16);
+    v = Obj.dv_get_int32(dv, 6);
     
     print("value is ", v);
+
+
+
+    Obj.dv_set_int32(dv, 6, 150);
+    v = Obj.dv_get_int32(dv, 6);
+    
+    print("value 4 bytes is ", v);
+
+
+    Obj.dv_set_int32(dv, 6, 300);
+    v = Obj.dv_get_int32(dv, 6);
+    
+    print("value 4 bytes is ", v);
+
+
+    Obj.dv_set_int32(dv, 6, 30000);
+    v = Obj.dv_get_int32(dv, 6);
+    print("value 4 bytes is ", v);
+
+    Obj.dv_set_int32(dv, 6, 36000);
+    v = Obj.dv_get_int32(dv, 6);
+
+    print("value 4 bytes is ", v);
+
+    Obj.dv_set_int32(dv, 6, 63000);
+    v = Obj.dv_get_int32(dv, 6);
+    
+    print("value 4 bytes is ", v);
+
+
+    Obj.dv_set_int32(dv, 6, 128000);
+    v = Obj.dv_get_int32(dv, 6);
+    
+    print("value 4 bytes is ", v);
+
+
+    Obj.dv_set_int32(dv, 6, 1200000);
+    v = Obj.dv_get_int32(dv, 6);
+    
+    print("value 4 bytes is ", v);
+
+
+    Obj.dv_set_int32(dv, 6, 120000000);
+    v = Obj.dv_get_int32(dv, 6);
+    
+    print("value 4 bytes is ", v);
+
    
    
   print("Onbj created");

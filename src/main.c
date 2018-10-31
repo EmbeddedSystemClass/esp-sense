@@ -96,6 +96,13 @@ dv_buf* dv_alloc( int size)
 }
 
 
+
+int dv_set_int8(dv_buf* buf, int index, int v) {
+    dv_buf* dv = (dv_buf*) buf;
+    dv->buf[index] = (v & 0xFF);
+    return 1;
+}
+
 int dv_get_int8(dv_buf* buf, int index) {
     dv_buf* dv = (dv_buf*) buf;
     char v = (char) dv->buf[index];
@@ -106,27 +113,11 @@ int dv_get_int8(dv_buf* buf, int index) {
 
 int dv_get_int16(dv_buf* buf, int index) {
     dv_buf* dv = (dv_buf*) buf;
-    int v = (char) dv->buf[index];
-    v = (v << 8) | (dv->buf[index + 1] & 0xFF);
+    int v =  (dv->buf[index + 1] & 0xFF) << 8;
+    v = v | (dv->buf[index] & 0xFF);
     return v;
 }
 
-
-int dv_get_int32(dv_buf* buf, int index) {
-    dv_buf* dv = (dv_buf*) buf;
-    int v = (char) (dv->buf[index]  & 0xFF);
-    v = (v << 8) | (dv->buf[index + 1] & 0xFF);
-    v = (v << 8) | (dv->buf[index + 2] & 0xFF);
-    v = (v << 8) | (dv->buf[index + 8] & 0xFF);
-    return v;
-}
-
-
-int dv_set_int8(dv_buf* buf, int index, int v) {
-    dv_buf* dv = (dv_buf*) buf;
-    dv->buf[index] = (v & 0xFF);
-    return 1;
-}
 
 int dv_set_int16(dv_buf* buf, int index, int v) {
     dv_buf* dv = (dv_buf*) buf;
@@ -134,6 +125,16 @@ int dv_set_int16(dv_buf* buf, int index, int v) {
     dv->buf[index + 1] = ((v >> 8) & 0xFF);
     return 1;
 }
+
+int dv_get_int32(dv_buf* buf, int index) {
+    dv_buf* dv = (dv_buf*) buf;
+    int v =   (dv->buf[index + 3]  & 0xFF);
+    v = (v << 8) | (dv->buf[index + 2] & 0xFF);
+    v = (v << 8) | (dv->buf[index + 1] & 0xFF);
+    v = (v << 8) | (dv->buf[index] & 0xFF);
+    return v;
+}
+
 
 int dv_set_int32(dv_buf* buf, int index, int v) {
     dv_buf* dv = (dv_buf*) buf;

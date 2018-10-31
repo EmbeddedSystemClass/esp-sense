@@ -24,8 +24,8 @@ filesystem:
 config_schema:
   - ["wifi.ap.enable", false]
   - ["wifi.sta.enable", true]
-  - ["wifi.sta.ssid", "55D55"]
-  - ["wifi.sta.pass", "D#767365"]
+  - ["wifi.sta.ssid", "sense"]
+  - ["wifi.sta.pass", "react2017"]
   - ["app", "o", {title: "My app custom settings"}]
   - ["app.pin", "i", 5, {title: "GPIO pin a sensor is attached to"}]
   - ["mqtt", "o", {title: "MQTT settings"}]
