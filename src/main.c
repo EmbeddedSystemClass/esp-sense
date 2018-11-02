@@ -95,6 +95,10 @@ dv_buf* dv_alloc( int size)
       return dv;
 }
 
+void* dv_getBuf(dv_buf* buf) {
+    return buf->buf;
+}
+
 
 
 int dv_set_int8(dv_buf* buf, int index, int v) {

@@ -1,11 +1,25 @@
 let ModbusSlave = {
     deviceId: 0,
 
+    dv_alloc: ffi('void *dv_alloc(int)'),
+  
+    getInt8: ffi('int dv_get_int8(void*, int)'),
+    setInt8: ffi('int dv_set_int8(void*, int, int)'),
+    getInt16: ffi('int dv_get_int16(void*, int)'),
+    getInt32: ffi('int dv_get_int32(void*, int)'),
+    setInt16: ffi('int dv_set_int16(void*, int, int)'),
+    setInt32: ffi('int dv_set_int32(void*, int, int)'),
+
+    getBuf: ffi('void* dv_getBuf(void*)'),
+ 
+
     init: function(deviceBuffers) {
         //this.deviceId = config.deviceId;
 
         this.responseBuffer = RS485.calloc(255, 1);
         this.responseView = DataView.create(this.responseBuffer, 0, 255);
+
+        this.dataBuffer = ModbusBuffer.dv_alloc(255);
 
         this.responseLength = 0;
         this.deviceBuffers = deviceBuffers;
@@ -34,7 +48,10 @@ let ModbusSlave = {
 
         print("Total bytes to respond", n);
         // TODO: dynamic length
-        this.responseView.setUint8(2, n); // byte count
+        //this.responseView.setUint8(2, n); // byte count
+
+        ModbusSlave.setInt8(this.dataBuffer, 2, n);
+
         this.responseLength += 1;
         
         let bitMerge = 0;
@@ -47,7 +64,9 @@ let ModbusSlave = {
             bitMerge = bitMerge << 1;
 
             if (i !== 0 && i % 8 === 0) {
-                this.responseView.setUint8(3 + offset, bitMerge);
+                //this.responseView.setUint8(3 + offset, bitMerge);
+                ModbusSlave.setInt8(this.dataBuffer, 3 + offset, bitMerge);
+
                 this.responseLength += 1;
                 bitMerge = 0;
                 offset = offset + 1;
@@ -57,7 +76,10 @@ let ModbusSlave = {
         if ( (requestFrame.quantity > 0  && 
               requestFrame.quantity % 8 === 0) ||
               requestFrame.quantity % 8 > 0) {
-            this.responseView.setUint8(3 + offset, bitMerge);
+
+                 //this.responseView.setUint8(3 + offset, bitMerge);
+                 ModbusSlave.setInt8(this.dataBuffer, 3 + offset, bitMerge);
+
                 this.responseLength += 1;
                 bitMerge = 0;
                 offset = offset + 1;
@@ -76,7 +98,10 @@ let ModbusSlave = {
 
         print("Total bytes to respond", n);
         // TODO: dynamic length
-        this.responseView.setUint8(2, n); // byte count
+        // this.responseView.setUint8(2, n); // byte count
+
+        ModbusSlave.setInt8(this.dataBuffer, 2, n);
+
         this.responseLength += 1;
         
 
@@ -88,7 +113,10 @@ let ModbusSlave = {
             bitMerge = bitMerge << 1;
 
             if (i !== 0 && i % 8 === 0) {
-                this.responseView.setUint8(3 + offset, bitMerge);
+                //this.responseView.setUint8(3 + offset, bitMerge);
+
+                ModbusSlave.setInt8(this.dataBuffer, 3 + offset, bitMerge);
+
                 this.responseLength += 1;
                 bitMerge = 0;
                 offset = offset + 1;
@@ -98,7 +126,10 @@ let ModbusSlave = {
         if ((requestFrame.quantity > 0  && 
             requestFrame.quantity % 8 === 0) ||
             requestFrame.quantity % 8 > 0) {
-            this.responseView.setUint8(3 + offset, bitMerge);
+            //this.responseView.setUint8(3 + offset, bitMerge);
+
+            ModbusSlave.setInt8(this.dataBuffer, 3 + offset, bitMerge);
+
                 this.responseLength += 1;
                 bitMerge = 0;
                 offset = offset + 1;
@@ -107,10 +138,13 @@ let ModbusSlave = {
     },
 
     readHoldingRegisters: function(requestFrame) {
-        this.responseView.setUint8(2, requestFrame.quantity * 2); // byte count
+        //this.responseView.setUint8(2, requestFrame.quantity * 2); // byte count
+
+        ModbusSlave.setInt8(this.dataBuffer, 2, requestFrame.quantity * 2);
+
         this.responseLength += 1;
  
-  
+        print("loop start");
         for (let i = 0; i < requestFrame.quantity; i++) {
             let address = requestFrame.address + (i * 2);
             //print("reading address  ", address);
@@ -125,6 +159,9 @@ let ModbusSlave = {
             //this.responseView.setUint16(3 + (i * 2), value);
             this.responseLength += 2;
         }
+
+
+        print("loop end");
         
     },
 
@@ -132,7 +169,9 @@ let ModbusSlave = {
     readInputRegisters: function(requestFrame) {
         print("readInputRegisters ");
 
-        this.responseView.setUint8(2, requestFrame.quantity * 2); // byte count
+        //this.responseView.setUint8(2, requestFrame.quantity * 2); // byte count
+
+        ModbusSlave.setInt8(this.dataBuffer, 2, requestFrame.quantity * 2);
         this.responseLength += 1;
         
         //TODO: dynamic, based on requested quantity
@@ -144,7 +183,11 @@ let ModbusSlave = {
         for (let i = 0; i < requestFrame.quantity; i++) {
             print("reading input register i ", i);
             let value = this.activeDeviceBuffer.getInputRegisterUint16(requestFrame.address + (i * 2));
-            this.responseView.setUint16(3 + (i * 2), value);
+            
+            //this.responseView.setUint16(3 + (i * 2), value);
+            
+            ModbusSlave.setInt16(this.dataBuffer, 3 + (i * 2), value);
+
             this.responseLength += 2;
         }
  
@@ -265,8 +308,14 @@ let ModbusSlave = {
             return;
         }
         
-        this.responseView.setUint8(0, requestFrame.id); //id
-        this.responseView.setUint8(1, requestFrame.func); //fc
+        //this.responseView.setUint8(0, requestFrame.id); //id
+
+        ModbusSlave.setInt8(this.dataBuffer, 0, requestFrame.id);
+        
+        //this.responseView.setUint8(1, requestFrame.func); //fc
+
+
+        ModbusSlave.setInt8(this.dataBuffer, 1, requestFrame.func);
 
         this.responseLength = 2;
 
@@ -302,19 +351,30 @@ let ModbusSlave = {
             this.writeMultipleRegisters(requestFrame);
         }
 
-        let crc = RS485.crc16(this.responseBuffer, this.responseLength);
+        print("res length", this.responseLength);
+
+        let crc = RS485.crc16(ModbusSlave.getBuf(this.dataBuffer), this.responseLength);
         //print("crc Is  ", crc);
-        this.responseView.setUint8(this.responseLength, (crc >> 8) & 0xff ); 
-        this.responseView.setUint8(this.responseLength + 1, (crc  & 0xff ));
+
+
+        
+        // this.responseView.setUint8(this.responseLength, (crc >> 8) & 0xff ); 
+        // this.responseView.setUint8(this.responseLength + 1, (crc  & 0xff ));
+
+        ModbusSlave.setInt8(this.dataBuffer, this.responseLength, (crc >> 8) & 0xff );
+        
+        ModbusSlave.setInt8(this.dataBuffer, this.responseLength + 1, (crc  & 0xff));
+        
         
         this.responseLength += 2;
 
-     
-        let s = mkstr(this.responseBuffer, this.responseLength);
+        
+        print("convert start");
+        let s = mkstr(ModbusSlave.getBuf(this.dataBuffer), this.responseLength);
         //print("response length ",  this.responseLength);
-        for (let i = 0; i < this.responseLength; i++) {
-            print(s[i], s.at(i));
-        }
+        // for (let i = 0; i < this.responseLength; i++) {
+        //     print(s[i], s.at(i));
+        // }
         print(">>", s);
         this.serial.write(s, this.responseLength);
 

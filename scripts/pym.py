@@ -30,7 +30,7 @@ print( connection)
 # print(result)
 
 #Starting add, num of reg to read, slave unit.
-result= client.read_holding_registers(1, 10 ,unit= 1)
+result= client.read_holding_registers(1, 50 ,unit= 1)
 print(result)
 
 # result= client.read_holding_registers(1, 10 ,unit= 0x0a)
