@@ -4,12 +4,14 @@
   "description": "```bash mos build --arch esp32 && mos flash ```",
   "main": "index.js",
   "scripts": {
-    "flash": "mos build --arch esp32 && mos flash",
+    "build": "mos build --arch esp32",
     "fs": "sh upload.sh",
     "wfs": "upload.bat",
     "init-js": "mos put fs/init.js && mos call Sys.Reboot && mos console",
     "cb": "mos build --verbose --arch esp32 --clean && mos flash",
-    "console": "mos console"
+    "console": "mos console",
+    "flash": "mos flash",
+    "info": "mos call Sys.GetInfo"
   },
   "repository": {
     "type": "git",

@@ -29,13 +29,7 @@ let ModbusSlave = {
     setHoldingRegister: function(address, value) {
         this.holdingRegisters.setUint16(address, value, false);
     },
-
-    read: function() {
-        print("read ", this.deviceId);
-    }, 
-    write: function() {
-        print("write ", this.deviceId);
-    },
+ 
  
     readCoils: function(requestFrame) {
         print("readCoils ");
@@ -146,17 +140,16 @@ let ModbusSlave = {
  
         print("loop start");
         for (let i = 0; i < requestFrame.quantity; i++) {
-            let address = requestFrame.address + (i * 2);
-            //print("reading address  ", address);
-
-            //this.responseBuffer = RS485.calloc(255, 1);
-
+            let address = (requestFrame.address - 1 ) + (i * 2);
+            
             let value = this.activeDeviceBuffer.getHoldingRegisterUint16(address);
 
-            //let value = 0;
-            //print("addr & val", address, value);
+            print("addr & val", address, value);
             
             //this.responseView.setUint16(3 + (i * 2), value);
+
+            ModbusSlave.setInt8(this.dataBuffer, 3 + (i * 2), value);
+
             this.responseLength += 2;
         }
 

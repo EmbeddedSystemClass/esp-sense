@@ -19,6 +19,25 @@ let ModbusBuffer = {
              
             this.dataBuffer = ModbusBuffer.dv_alloc(200);
 
+            for (let i = 0; i < profile.config.length || 0; i++) {
+                let mc = profile.config[i];
+                if (mc.lt === MODBUS_HOLDING_REGISTERS) {
+                    print("mc ", mc.a, mc.lt, mc.v);
+                    let addr = (mc.a - 1) * 2;
+                    ModbusBuffer.setInt16(this.dataBuffer, addr, mc.v);
+                }
+            }
+
+
+            for (let i = 0; i < profile.config.length || 0; i++) {
+                let mc = profile.config[i];
+                if (mc.lt === MODBUS_HOLDING_REGISTERS) {
+                    print("get mc ", mc.a, mc.lt, mc.v);
+                    let addr = (mc.a - 1) * 2;
+                    print(ModbusBuffer.getInt16(this.dataBuffer, addr));
+                }
+            }
+
             this.offset = 0;
             this.le = false;
  
@@ -137,8 +156,6 @@ let Registry = {
      }
   },
 
- 
-
   loadModbus: function() {
     print("loadModbus Enter");
      
@@ -173,7 +190,7 @@ let Registry = {
         null, null, null, null, null, null, null, null, null, null,
         null, null, null, null, null, null, null, null, null, null,
         null, null, null, null, null, null, null, null, null, null,
-        null, null, null, null, null, null, null
+        null, null, null, null, null, null, null, null
     ];
        
     for (let i = 0; i < Registry.edge.modbus.length; i++) {
@@ -189,7 +206,6 @@ let Registry = {
                 break;
             }   
          }
-
 
         if (index > -1) {
 

@@ -99,8 +99,6 @@ void* dv_getBuf(dv_buf* buf) {
     return buf->buf;
 }
 
-
-
 int dv_set_int8(dv_buf* buf, int index, int v) {
     dv_buf* dv = (dv_buf*) buf;
     dv->buf[index] = (v & 0xFF);
@@ -112,8 +110,6 @@ int dv_get_int8(dv_buf* buf, int index) {
     char v = (char) dv->buf[index];
     return v;
 }
-
-
 
 int dv_get_int16(dv_buf* buf, int index) {
     dv_buf* dv = (dv_buf*) buf;
