@@ -14,13 +14,13 @@ log.setLevel(logging.DEBUG)
 #unit= the slave unit this request is targeting
 #address= the starting address to read from
 
-PORT= "/dev/tty.wchusbserial1420"
+PORT= "COM8"
 
 client= ModbusClient(method = "rtu", port=PORT, 
                                      stopbits = 1, 
                                      bytesize = 8, 
                                      parity = 'N',
-                                     baudrate= 9600,
+                                     baudrate=19200,
                                      timeout = 10)
 
 #Connect to the serial modbus server
@@ -32,20 +32,25 @@ print( connection)
 # print(result)
 
 #Starting add, num of reg to read, slave unit.
-result= client.read_holding_registers(36, 2 ,unit= 1)
-print(result)
-
-# result= client.read_holding_registers(1, 10 ,unit= 0x0a)
+#result= client.read_holding_registers(18,11,unit= 1)
+#print(result)
 # print(result)
-#rr = client.read_discrete_inputs(1, 1, unit=0x01)
+#result = client.read_discrete_inputs(1,5, unit=1)
 #print(rr)
 
 # client.write_coil(0x00, True, unit= 0x01)
 
 # client.write_coils(0x00, [True, False, True, True, False], unit= 0x01)
 
-#result= client.read_coils(0x00, 5 ,unit= 0x01)
-#print(result)
+#result= client.read_coils(1,1,unit= 0x01)
+#result = client.read_discrete_inputs(2,1, unit=1)
+#result= client.read_holding_registers(11,1 ,unit=1)
+#result=client.read_input_registers(2,1,unit=1)
+#result=client.write_coil(1,0,unit=1)
+#result=client.write_register(1,1111,unit=2)
+#result=client.write_coils(1,[0,0,0,0,0],unit=3)
+result=client.write_registers(15,[12,23,34,45,56],unit=5)
+print(result)
 
 # client.write_registers(0x00, [1,2,3,4,5,6], unit= 0x01)
 
