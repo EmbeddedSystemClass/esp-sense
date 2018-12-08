@@ -42,14 +42,14 @@ print( connection)
 
 # client.write_coils(0x00, [True, False, True, True, False], unit= 0x01)
 
-#result= client.read_coils(1,1,unit= 0x01)
-#result = client.read_discrete_inputs(2,1, unit=1)
-#result= client.read_holding_registers(11,1 ,unit=1)
+#result= client.read_coils(1,1,unit= 13)
+#result = client.read_discrete_inputs(2,1, unit=15)
+result= client.read_holding_registers(1,1 ,unit=5)
 #result=client.read_input_registers(2,1,unit=1)
 #result=client.write_coil(1,0,unit=1)
 #result=client.write_register(1,1111,unit=2)
 #result=client.write_coils(1,[0,0,0,0,0],unit=3)
-result=client.write_registers(15,[12,23,34,45,56],unit=5)
+#result=client.write_registers(15,[12,23,34,45,56],unit=5)
 print(result)
 
 # client.write_registers(0x00, [1,2,3,4,5,6], unit= 0x01)

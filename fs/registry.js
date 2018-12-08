@@ -19,6 +19,9 @@ let ModbusBuffer = {
             this.diCoilsBuf = ModbusBuffer.dv_alloc(profile.memory.discreteInputs);
             this.holdregBuf = ModbusBuffer.dv_alloc(profile.memory.holdingRegisters);
             this.inputregBuf = ModbusBuffer.dv_alloc(profile.memory.inputRegisters);
+
+            this.changes = [];
+
             for (let i = 0; i < profile.config.length || 0; i++) {
                 let mc = profile.config[i];
                 //For read Coils
@@ -55,6 +58,14 @@ let ModbusBuffer = {
             this.offset = 0;
             this.le = false;
  
+        },
+
+        addChange: function(change) {
+            this.changes.push(change);
+        },
+
+        clearChanges: function() {
+            this.changes = [];
         },
 
         getCoil: function(address) {

@@ -12,10 +12,28 @@ load('fetch.js');
 load("rs485.js");
 load("modbus_slave.js");
 load("registry.js");
+let Edge = {
+  macId: ''  
+};
+
+let Reporter = {
+  publishChanges: function(deviceBuffer) {
+    if (deviceBuffer.changes.length > 0) {
+      let res = MQTT.pub('/simulate/modbus', JSON.stringify({macId:Edge.macId,changes:deviceBuffer.changes}));
+        print('Published:', res ? 'yes' : 'no');
+        deviceBuffer.clearChanges();
+    }
+  }
+};
+ 
 Cfg.set({debug: {level: 3}});
+GPIO.set_mode(2, GPIO.MODE_OUTPUT);
 Registry.loadEdge();
 if (Registry.edge) {
+  RPC.call(RPC.LOCAL, 'Sys.GetInfo', null, function(resp, ud) {
   print("Edge Setting found");
+  Edge.macId = resp.mac;
+
   if (Registry.edge.enableModbus === true) {
     print("Modbus Enabled, loading modbus");
 
@@ -47,13 +65,15 @@ if (Registry.edge) {
             }
           }
     };
+    GPIO.write(2,0);
     RS485.setFlowControl(23);
     RS485.init(serialPortConfig);
     Registry.loadModbus();
-
-    MQTT.sub('/simulate/modbus/edge/1', function(conn, topic, msg) {
+  
+    MQTT.sub('/simulate/modbus/edge/'+resp.mac, function(conn, topic, msg) {
       print('Topic:', topic, ' Getting edge msg:', msg);
       let data = JSON.parse(msg);
+      GPIO.write(2,1);
       for (let i = 0; i < data.length; i++) {
          let d = data[i];
          if (d.lt === MODBUS_COILS) {
@@ -69,12 +89,16 @@ if (Registry.edge) {
             Registry.deviceBuffers[d.sid].setInputRegisterUint16(d.a, d.v);
           }
         }
+        GPIO.write(2,0);
+
     }, null);
    
   } 
   else{
     print("Modbus not enabled");
   }
+
+}, null);
 }
 else
 {

@@ -65,6 +65,7 @@ let Fetch = {
        Fetch.getJson(apiUrl,function(err, profile, ud) {
                 print("Got profile callback ", profile);
                 File.write(JSON.stringify(profile), "profile-" + profile.id + ".json");
+                GPIO.write(2,1);
             });
     }
 };

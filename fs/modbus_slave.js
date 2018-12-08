@@ -119,8 +119,6 @@ let ModbusSlave = {
     },
 
     writeSingleRegister: function(requestFrame) {
-        let register=[];
-        let o={};
         print("writeSingleRegister ");
         ModbusSlave.setInt16(this.dataBuffer,2,requestFrame.address);
         this.responseLength += 2;
@@ -130,22 +128,21 @@ let ModbusSlave = {
         this.activeDeviceBuffer.setHoldingRegisterUint16(requestFrame.address,value);
         ModbusSlave.setInt16(this.dataBuffer,4, value);
         this.responseLength += 2;
-        o= {
+
+        let change = {
             sid:requestFrame.id,
             lt: MODBUS_HOLDING_REGISTERS,
             v: value,
             a: requestFrame.address,
-
         };
-        register.push(o);
-        let res = MQTT.pub('/simulate/modbus', JSON.stringify(register));
-        print('Published:', res ? 'yes' : 'no');
+        this.activeDeviceBuffer.addChange(change);
 
+        Reporter.publishChanges(this.activeDeviceBuffer);
     },
 
-    tempcoil:[],
+   
     _setCoils: function(address, byteValue, quantity,requestFrame) {
-        let o={};
+        let change={};
         for (let j = 0; j < quantity; j++) {
             let bitValue = (byteValue & 0x01);
             print("_setCoils address ", address + j);
@@ -154,28 +151,26 @@ let ModbusSlave = {
             byteValue = byteValue >> 1;
             this.activeDeviceBuffer.setCoil(address+j,bitValue);
             print("_setCoils byteValue >> ", byteValue);
-            o={
+            change={
                 sid:requestFrame.id,
                 lt: MODBUS_COILS,
                 v: bitValue,
                 a:address+j
             };
-            this.tempcoil.push(o);
-
+            this.activeDeviceBuffer.addChange(change);
         }
     },
 
     
     writeSingleCoil: function(requestFrame) {
-        let coil=[];
-        let o={};
         print("writeSingleCoil ");
+        let change={};
         ModbusSlave.setInt16(this.dataBuffer,2,requestFrame.address);
         this.responseLength+=2;
         let value = requestFrame.dataView.getUint16(0);
         print("Recieved coil",value);
         let v =(value && 0xffff0000) === 0xffff0000 ? 1 :0;
-        o={
+        change={
             sid:requestFrame.id,
             lt: MODBUS_COILS,
             v: v,
@@ -184,10 +179,8 @@ let ModbusSlave = {
         this.activeDeviceBuffer.setCoil(requestFrame.address,v);
         ModbusSlave.setInt16(this.dataBuffer,4,value);
         this.responseLength+=2;
-        coil.push(o);
-        let res = MQTT.pub('/simulate/modbus', JSON.stringify(coil));
-        print('Published:', res ? 'yes' : 'no');
-
+        this.activeDeviceBuffer.addChange(change);
+        Reporter.publishChanges(this.activeDeviceBuffer);
     },
 
     writeMultipleCoils: function(requestFrame) {
@@ -208,37 +201,33 @@ let ModbusSlave = {
             address =  address + i * 8;
             this._setCoils(address, value, bitsCount,requestFrame);
         }
-
-        let res = MQTT.pub('/simulate/modbus', JSON.stringify(this.tempcoil));
-        print('Published:', res ? 'yes' : 'no');
-        this.tempcoil=[];
+        Reporter.publishChanges(this.activeDeviceBuffer);
     },
   
 
     writeMultipleRegisters: function(requestFrame) {
         print("writeMultipleRegisters ");
+        let change={};
+
         ModbusSlave.setInt16(this.dataBuffer, 2, requestFrame.address);      
         this.responseLength += 2;
         print("loop start");
         let j=0;
-        let registers=[];
-        let o={};
         for (let i = 0; i < requestFrame.quantity; i++) {
             let address = requestFrame.address +i;
             let value = requestFrame.dataView.getUint16(j);
             this.activeDeviceBuffer.setHoldingRegisterUint16(address,value);
-             o= {
-                 sid:requestFrame.id,
+             change= {
+                sid:requestFrame.id,
                 lt: MODBUS_HOLDING_REGISTERS,
                 v: value,
                 a: address
+
             }
-            registers.push(o);
+            this.activeDeviceBuffer.addChange(change);
             j+=2;
         }
-        
-        let res = MQTT.pub('/simulate/modbus', JSON.stringify(registers));
-        print('Published:', res ? 'yes' : 'no');
+        Reporter.publishChanges(this.activeDeviceBuffer);
         ModbusSlave.setInt16(this.dataBuffer,4,requestFrame.quantity);
       
         this.responseLength+=2;
